@@ -1,0 +1,2 @@
+rem docker run --rm -v C:\Workspace\ApteroVR\tmp\blend\media:/media/ zocker160/blender /media/a.blend -o /media/frame_### -f 1
+docker run --rm -v C:\Workspace\ApteroVR\tmp\blend\media:/media/ docker-blender
