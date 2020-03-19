@@ -20,6 +20,7 @@ export default class PreviewApiService {
         router.post('/thumbnail/compute/hash', (req, res) => {
             let json = req.body;
             let fileUrl = json.url;
+            console.log("process /thumbnail/compute/hash",json);
             if (fileUrl) {
                 this.previewEngine.computeHash(fileUrl).then(result => {
                     res.json({hash:result});
@@ -36,6 +37,7 @@ export default class PreviewApiService {
         router.post('/thumbnail/get', (req, res) => {
             let json = req.body;
             let hash = json.hash;
+            console.log("process /thumbnail/get",json);
             if (hash) {
                 res.json({url:this.previewEngine.tryCache(hash)});
             } else {
@@ -47,6 +49,7 @@ export default class PreviewApiService {
         router.post('/thumbnail/generate', (req, res) => {
             let json = req.body;
             let fileUrl = json.url;
+            console.log("process /thumbnail/generate",json);
             if (fileUrl) {
                 this.previewEngine.generateThumbnail(fileUrl).then(result => {
                     res.json(result);

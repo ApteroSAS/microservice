@@ -70,10 +70,11 @@ export default class PreviewEngine {
         //3) upload thumbnial image
         let folder=this.folder;
         if(folder===""){
-            folder =  Path.resolve(__dirname, 'media');
+            folder =  Path.resolve(__dirname, 'media/');
         }
+        folder =  Path.resolve(folder,"tmp_"+Math.random()+"/");
 
-        console.log("downloading 3d file");
+        console.log("downloading 3d file : "+url);
         //url = 'https://unsplash.com/photos/AaEQmoufHLk/download?force=true';
         //https://hub.aptero.co/data/data/Pot_blanc_smooth.glb
         if (!Fs.existsSync(folder)) {
@@ -83,12 +84,10 @@ export default class PreviewEngine {
         const folderIn = Path.resolve(folder, 'in');
         if (!Fs.existsSync(folderIn)) {
             Fs.mkdirSync(folderIn);
-            console.log("created temp folder at: " + folderIn);
         }
         const folderOut = Path.resolve(folder, 'out');
         if (!Fs.existsSync(folderOut)) {
             Fs.mkdirSync(folderOut);
-            console.log("created temp folder at: " + folderOut);
         }
         const filepath = Path.resolve(folderIn, "3dfile.glb");
         const filepathOut = Path.resolve(folderOut, "thumbnail.png");
@@ -135,10 +134,13 @@ export default class PreviewEngine {
             });
         });
 
-        console.log("uploading file");
+        console.log("uploading file : "+filepathOut);
         let file3dHash = await this.hashComputer.fromFilePath(filepath);
         let result = await this.uploadServer.uploadLocalFile(filepathOut,file3dHash);
         this.hashStorage.addHashData(file3dHash,result.fileURL);
+        Fs.rmdir(folder, { recursive: true },()=>{
+            console.log("removed temp folder at: " + folder);
+        });
         return result.fileURL;
     }
 

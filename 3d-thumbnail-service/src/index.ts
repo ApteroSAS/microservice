@@ -35,15 +35,6 @@ expressApp.listen(port, () => {
     apiService.start(expressApp, expressApp.io);
     ///////////////
 
-
-    ipfsFileUploadService.start({
-        host: "ipfs.private.aptero.co",
-        port: "5666",
-        protocol: "http"
-    }, ["https://ipfs.private.aptero.co/ipfs/"]);
-    //ipfsFileUploadService.start({host:"ipfs.private.aptero.co",port:"443",protocol:"https"},["https://ipfs.private.aptero.co/ipfs/"]);
-    //ipfsFileUploadService.start({host:"ipfs.funnychain.co",port:"5001",protocol:"https"},["https://ipfs.funnychain.co/ipfs/"]);
-
     console.log('Listening on ' + port);
 });
 
