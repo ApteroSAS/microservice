@@ -1,4 +1,5 @@
 import PreviewEngine from "@root/service/preview/PreviewEngine";
+import {properties} from "@root/properties/properties";
 
 const express = require('express');
 
@@ -55,7 +56,8 @@ export default class PreviewApiService {
                     res.json(result);
                 }).catch((err) => {
                     console.error(err);
-                    res.status(500).json(err);
+                    res.json(properties.DEFAULT_IMAGE);
+                    //res.status(500).json(err);
                 });
             } else {
                 console.error(new Error());

@@ -23,6 +23,9 @@ export default class PreviewEngine {
     async computeHash(url: string): Promise<string> {
         const {folder,filepathOut,filepath} = await this.downloadFile(url);
         let file3dHash = await this.hashComputer.fromFilePath(filepath);
+        Fs.rmdir(folder, { recursive: true },()=>{
+            console.log("removed temp folder at: " + folder);
+        });
         return file3dHash;
     }
 
