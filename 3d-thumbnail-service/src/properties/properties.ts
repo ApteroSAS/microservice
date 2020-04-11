@@ -1,5 +1,4 @@
 export let properties = {
-    DEFAULT_IMAGE: process.env.DEFAULT_IMAGE ? process.env.JSON_DB_STORAGE : "default",
     JSON_DB_STORAGE: process.env.JSON_DB_STORAGE ? process.env.JSON_DB_STORAGE : "tmp.json",
     FILE_3D_TMP_STORAGE: process.env.FILE_3D_TMP_STORAGE ? process.env.FILE_3D_TMP_STORAGE : "",
     UPLOAD_SERVER_URL: process.env.UPLOAD_SERVER_URL ? process.env.UPLOAD_SERVER_URL : "https://alphahub.aptero.co",

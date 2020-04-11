@@ -56,8 +56,7 @@ export default class PreviewApiService {
                     res.json(result);
                 }).catch((err) => {
                     console.error(err);
-                    res.json(properties.DEFAULT_IMAGE);
-                    //res.status(500).json(err);
+                    res.status(500).json(err);
                 });
             } else {
                 console.error(new Error());
