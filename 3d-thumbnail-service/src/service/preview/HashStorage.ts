@@ -1,15 +1,19 @@
-export class HashStorage{
-    hashData={};
+const low = require('lowdb')
+const FileSync = require('lowdb/adapters/FileSync')
 
-    constructor(){
+export class HashStorage {
+    private db: any;
 
+    constructor(jsonPath: string) {
+        const adapter = new FileSync(jsonPath)
+        this.db = low(adapter)
     }
 
-    addHashData(hash,data){
-        this.hashData[hash]=data;
+    addHashData(hash, data) {
+        this.db.set(hash, data).write();
     }
 
-    getHashData(hash){
-        return this.hashData[hash];
+    getHashData(hash): string {
+        return this.db.get(hash).value();
     }
 }

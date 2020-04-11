@@ -32,6 +32,7 @@
     "form-data": "^3.0.0",
     "html-entities": "^1.2.1",
     "ipfs-http-client": "^42.0.0",
+    "lowdb": "^1.0.0",
     "module-alias": "^2.2.2",
     "promise-pool-executor": "^1.1.1",
     "request": "^2.88.2",

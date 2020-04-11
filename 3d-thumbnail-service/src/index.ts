@@ -30,7 +30,7 @@ let port = 8086;
 expressApp.listen(port, () => {
     ///////////////
 
-    let previewEngine = new PreviewEngine(properties.UPLOAD_SERVER_URL, properties.UPLOAD_SERVER_TOKEN, properties.FILE_3D_TMP_STORAGE);
+    let previewEngine = new PreviewEngine(properties.UPLOAD_SERVER_URL, properties.UPLOAD_SERVER_TOKEN, properties.JSON_DB_STORAGE, properties.FILE_3D_TMP_STORAGE);
     let apiService: PreviewApiService = new PreviewApiService(previewEngine);
     apiService.start(expressApp, expressApp.io);
     ///////////////

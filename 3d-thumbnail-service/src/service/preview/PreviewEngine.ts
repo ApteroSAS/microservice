@@ -12,65 +12,27 @@ const {exec} = require("child_process");
 export default class PreviewEngine {
     private uploadServer: GoUploadServerUploadService;
     private hashComputer: FileHashComputer;
-    private hashStorage:HashStorage = new HashStorage();
+    private hashStorage:HashStorage ;
 
-    constructor(private serverUrl:string,private token:string,private folder:string = ""){
+    constructor(private serverUrl:string,private token:string,jsonDbStorage:string,private folder:string = ""){
+        this.hashStorage = new HashStorage(jsonDbStorage);
         this.uploadServer = new GoUploadServerUploadService(serverUrl,token);
         this.hashComputer = new FileHashComputer();
     }
 
     async computeHash(url: string): Promise<string> {
-        let folder=this.folder;
-        if(folder===""){
-            folder =  Path.resolve(__dirname, 'media');
-        }
-
-        console.log("downloading 3d file");
-        //url = 'https://unsplash.com/photos/AaEQmoufHLk/download?force=true';
-        //https://hub.aptero.co/data/data/Pot_blanc_smooth.glb
-        if (!Fs.existsSync(folder)) {
-            Fs.mkdirSync(folder);
-            console.log("created temp folder at: " + folder);
-        }
-        const folderIn = Path.resolve(folder, 'in');
-        if (!Fs.existsSync(folderIn)) {
-            Fs.mkdirSync(folderIn);
-            console.log("created temp folder at: " + folderIn);
-        }
-        const folderOut = Path.resolve(folder, 'out');
-        if (!Fs.existsSync(folderOut)) {
-            Fs.mkdirSync(folderOut);
-            console.log("created temp folder at: " + folderOut);
-        }
-        const filepath = Path.resolve(folderIn, "3dfile.glb");
-        const filepathOut = Path.resolve(folderOut, "thumbnail.png");
-        await Fs.closeSync(Fs.openSync(filepath, 'w'));
-        const writer = Fs.createWriteStream(filepath);
-
-        const response = await Axios({
-            url,
-            method: 'GET',
-            responseType: 'stream'
-        });
-
-        response.data.pipe(writer);
-
-        await new Promise((resolve, reject) => {
-            writer.on('finish', resolve);
-            writer.on('error', reject);
-        });
-
+        const {folder,filepathOut,filepath} = await this.downloadFile(url);
         let file3dHash = await this.hashComputer.fromFilePath(filepath);
         return file3dHash;
     }
 
-    async generateThumbnail(url: string): Promise<string> {
-        //1) download url
-        //2) generate thumbnail image
-        //3) upload thumbnial image
+    async downloadFile(url: string){
         let folder=this.folder;
         if(folder===""){
             folder =  Path.resolve(__dirname, 'media/');
+            if (!Fs.existsSync(folder)) {
+                Fs.mkdirSync(folder);
+            }
         }
         folder =  Path.resolve(folder,"tmp_"+Math.random()+"/");
 
@@ -106,6 +68,20 @@ export default class PreviewEngine {
             writer.on('finish', resolve);
             writer.on('error', reject);
         });
+
+        return {
+            folder:folder,
+            filepathOut:filepathOut,
+            filepath:filepath,
+        }
+    }
+
+    async generateThumbnail(url: string): Promise<string> {
+        //1) download url
+        //2) generate thumbnail image
+        //3) upload thumbnial image
+
+        const {folder,filepathOut,filepath} = await this.downloadFile(url);
 
         console.log("generating thumbnail");
 
