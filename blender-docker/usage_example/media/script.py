@@ -6,7 +6,6 @@ from bpy import context
 ####################
 bpy.ops.import_scene.gltf(filepath='/media/in/3dfile.glb')
 
-
 ####################
 # Select objects that will be rendered
 ####################
