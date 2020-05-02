@@ -35,7 +35,7 @@ export default class LiveEngine {
     async listLive(user: string, filter: string): Promise<LiveFormattedData[]> {
         let values = this.db.get("lives").value();
         values = values.filter((value: LiveData) => {
-            return value.user === user && filter ? value.name.search(filter) !== -1 : true;
+            return value.user === user && (filter ? value.name.indexOf(filter) !== -1 : true);
         });
         if (values) {
             return values.map(value => this.convert(value));
