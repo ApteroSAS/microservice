@@ -1,0 +1,35 @@
+{
+  "name": "aframe-in-app-browser",
+  "version": "0.0.5",
+  "description": "A progressive in-app browser for aframe using an electron based headless browser companion app.",
+  "homepage": "https://github.com/shaneharris/aframe-in-app-browser",
+  "main": "server.js",
+  "keywords": [
+    "AFRAME",
+    "Browser",
+    "Electron"
+  ],
+  "scripts": {
+    "start": "node_modules/.bin/electron .",
+    "start-electron": "node_modules/.bin/electron .",
+    "start-electron2": "electron .",
+    "build": "webpack --mode production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shaneharris/aframe-in-app-browser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shaneharris/aframe-in-app-browser/issues"
+  },
+  "devDependencies": {
+    "electron": "^8.5.2"
+  },
+  "author": "Shane Harris",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "socket.io": "^2.3.0"
+  }
+}
