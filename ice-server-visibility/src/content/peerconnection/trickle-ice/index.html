@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1, maximum-scale=1">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta id="theme-color" name="theme-color" content="#ffffff">
+    <base target="_blank">
+    <title>Connection test</title>
+    <link href="//fonts.googleapis.com/css?family=Roboto:300,400,500,700" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="../../../css/main.css">
+    <link rel="stylesheet" href="css/main.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/adapterjs/0.15.5/adapter.min.js"
+        integrity="sha512-8HaugtT+4c0rhgZIggNCv7I2N0u5OuCXQutD91XdRLqtBl4kD5z2B6QmHczDFMpeENZV060Fip3S954njcfv9A=="
+        crossorigin="anonymous"></script>
+    <style>
+        section {
+            padding: 10px !important;
+            background: #d3d3d342;
+            margin: 10px;
+            border-radius: 10px;
+        }
+    
+        .collapsible {
+            background-color: #777;
+            color: white;
+            cursor: pointer;
+            padding: 18px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 15px;
+        }
+
+        .active, .collapsible:hover {
+        background-color: #555;
+        }
+
+        .content {
+        padding: 0 18px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+        background-color: #f1f1f1;
+        }
+    </style>
+    </head>
+    
+    <body>
+<div id="container">
+
+    <h2 style="text-align:center">Server Visibility Test<span style="font-size: 10px;display: block;">Trickle ICE</span>
+    </h2>
+    <button class="collapsible">More Info on the test</button>
+    <div class="content">
+        <section>
+        
+            <p>This page tests the trickle ICE functionality. It creates a PeerConnection with
+                the specified ICEServers, and then starts candidate gathering for a session with a single audio stream. As
+                candidates are gathered, they are displayed in the text box below, along with an indication when candidate
+                gathering is complete.</p>
+        
+            <p>Note that if no getUserMedia permissions for this origin are persisted only candidates from a single
+                interface will be gathered in Chrome.</p>
+        
+            <p>Individual STUN and TURN servers can be added using the Add server / Remove server controls below; in
+                addition, the type of candidates released to the application can be controlled via the IceTransports
+                constraint.</p>
+        
+            <p>If you test a STUN server, it works if you can gather a candidate with type "srflx".
+                If you test a TURN server, it works if you can gather a candidate with type "relay".</p>
+        </section>
+        </div>
+        <p><b>Note:</b> If you test just a single TURN/UDP server, this page even allows you to detect when you are using the
+            wrong
+        credential to authenticate.</p>
+
+<div style="display:flex;justify-content: space-between;">
+        <section id="iceServers">
+            <h2>Connection Servers <span style="font-size: 10px;display: block;">(ICE servers)</span></h2>
+            <select id="servers" size="4"></select>
+            <div>
+                <label for="url">STUN or TURN URI:</label>
+                <input id="url">
+            </div>
+            <div>
+                <label for="username">TURN username:</label>
+                <input id="username">
+            </div>
+            <div>
+                <label for="password">TURN password:</label>
+                <input id="password">
+            </div>
+            <div>
+                <button id="add">Add Server</button>
+                <button id="remove">Remove Server</button>
+                <button id="reset">Reset to defaults</button>
+            </div>
+        </section>
+        <section id="iceOptions">
+            <h2>Connection Config <span style="font-size: 10px;display: block;">(ICE options)</span></h2>
+            <div id="iceTransports">
+                <label for="transports"><span>Transport type:</span></label>
+                <input type="radio" name="transports" value="all" id="all" checked>
+                <span>all</span>
+                <input type="radio" name="transports" value="relay" id="relay">
+                <span>relay</span>
+            </div>
+            <div>
+                <label>Candidate Pool:</label>
+                <span id="poolValue">0</span>
+                <span class="gray">0</span>
+                <input id="iceCandidatePool" type="range" min="0" max="10" value="0">
+                <span class="gray">10</span>
+            </div>
+        </section>
+        </div>
+    
+    <div id="doneAlert" style="background-color: #dcf9dc;padding: 10px;border-radius: 10px;color: green;display: none;">
+        Done!
+    </div>
+
+    <section>
+        <table id="candidates">
+            <thead id="candidatesHead">
+            <tr>
+                <th>Time</th>
+                <th>Component</th>
+                <th>Type</th>
+                <th>Foundation</th>
+                <th>Protocol</th>
+                <th>Address</th>
+                <th>Port</th>
+                <th>Priority</th>
+            </tr>
+            </thead>
+            <tbody id="candidatesBody"></tbody>
+        </table>
+        <button id="gather">Start</button>
+        <div id="error-note">Note: errors from onicecandidateerror above are not neccessarily fatal. For example an IPv6 DNS lookup may fail but relay candidates can still be gathered via IPv4.</div>
+        <div id="error"></div>
+    </section>
+</div>
+<script>
+    var coll = document.getElementsByClassName("collapsible");
+    var i;
+
+    for (i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+            var content = this.nextElementSibling;
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+            }
+        });
+    }
+</script>
+<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+<script src="js/main.js" async></script>
+
+<script src="../../../js/lib/ga.js"></script>
+
+</body>
+</html>
