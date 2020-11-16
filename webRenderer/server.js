@@ -9,7 +9,7 @@ expressapp.use(cors());
 const server = http.createServer(expressapp);
 
 const io = require('socket.io')(server, {
-    path: '/service/web-renderer/socket.io',
+    // path: '/service/web-renderer/socket.io',
     handlePreflightRequest: (req, res) => {
         const headers = {
             "Access-Control-Allow-Headers": "Content-Type, Authorization",
@@ -23,13 +23,23 @@ const io = require('socket.io')(server, {
 
 class App{
     constructor(){
+        // run this at early startup, before app.on('ready')
+        app.commandLine.appendSwitch('--no-sandbox')
         app.once('ready', () => this.ready());
     }
     ready(){
         app.allowRendererProcessReuse = true;
+        let width = 1024;
+        let height = 768;
+        console.log("starting with args : "+process.argv);
+        if(process.argv.length === 4){
+            width = +process.argv[2];
+            height = +process.argv[3];
+        }
+        console.log("width: "+width+" / height: "+height);
         this.win = new BrowserWindow({
-            width: 1080,
-            height: 640,
+            width: width,
+            height: height,
             show: false,
             frame: false,
             webPreferences: {
@@ -40,19 +50,16 @@ class App{
         });
         this.setupSocket();
         this.setupWindow();
-        console.log("ready");
     }
     setupSocket(){
         io.on('connection', socket=>{
             this.client = socket;
-            if(this.win){
-                this.sendToClient('did-navigate',this.win.webContents.getURL());
-            }
-            if(this.last_paint){
-                this.sendToClient('frame',this.last_paint);
-            }
             socket.on('event',event=>{
+                console.log("event",event);
                 this.win.webContents.sendInputEvent(event);
+            });
+            socket.on('exit',()=>{
+                process.exit(0);
             });
             socket.on('load-url',url_string=>{
                 if(typeof url_string === "string"){
@@ -62,19 +69,30 @@ class App{
                     this.win.webContents.loadURL(url_string);
                 }
             });
+            socket.emit("init_ok");
+            if(this.win){
+                this.sendToClient('did-navigate',this.win.webContents.getURL());
+            }
+            if(this.last_paint){
+                this.sendToClient('frame',this.last_paint);
+            }
         });
-        io.origins((origin, callback) => {
-          callback(null, true);
-        });
+        if(io.origins) {
+            io.origins((origin, callback) => {
+                callback(null, true);
+            });
+        }
         io.listen(3443);
+        console.log("ready on 3443");
     }
     sendToClient(message,data){
         if(this.client){
+            console.log(message,data);
             this.client.emit(message,data);
         }
     }
     setupWindow(){
-        this.win.loadURL('https://github.com');
+        this.win.loadURL('https://google.com');
         this.win.webContents.setFrameRate(15);
         this.win.webContents.on('paint', (event, dirty, image) => {
             this.last_paint = image.toJPEG(65);

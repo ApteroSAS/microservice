@@ -43,12 +43,17 @@ RUN npm install
 COPY ./server.js ./server.js
 
 USER root
+RUN chown root:root /workspace/node_modules/electron/dist/chrome-sandbox
 RUN chmod 4755 /workspace/node_modules/electron/dist/chrome-sandbox
-RUN chown root /workspace/node_modules/electron/dist/chrome-sandbox
 USER main
 
 ENV PORT 3443
 EXPOSE 3443
 
-CMD ["/bin/sh", "-c", "/usr/bin/xvfb-run -a -s \"-screen 0 1024x768x24\" npm run start-electron"]
+ENV width 1024
+ENV height 768
+#-e width='1024' -e height='768'
+
+CMD ["/bin/sh", "-c", "/usr/bin/xvfb-run -a -s \"-screen 0 ${width}x${height}x24\" node_modules/.bin/electron . ${width} ${height}"]
+#CMD ["/bin/sh", "-c", "/usr/bin/xvfb-run -a -s \"-screen 0 ${width}x${height}x24\" npm run start-electron"]
 #CMD ["npm", "run", "start-electron"]
