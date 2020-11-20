@@ -10,7 +10,7 @@ class App{
     private io: any;
     private docker: any;
     private networkName = "web_renderer_network";
-    private localhostMode = true;
+    private localhostMode = false;
     private serverSocket: any;
     constructor(){
         this.setupDocker();
@@ -19,9 +19,11 @@ class App{
     setupDocker(){
         this.docker = new Docker();
         this.docker.listContainers((err, containers) => {
-            containers.forEach((containerInfo) => {
-                console.log(containerInfo);
-            });
+            if(containers) {
+                containers.forEach((containerInfo) => {
+                    console.log(containerInfo);
+                });
+            }
         });
         this.docker.ping((err, data) => {
             console.log(data);
@@ -53,19 +55,15 @@ class App{
 
     setupSocket(){
         const expressapp = express();
-        expressapp.use(cors());
+        expressapp.use(cors({
+            origin: (origin, callback)=>{
+                // allow requests with no origin
+                return callback(null, true);
+            }
+        }));
         const server = http.createServer(expressapp);
         this.io = io(server, {
-            path: '/service/web-renderer/socket.io',
-            handlePreflightRequest: (req, res) => {
-                const headers = {
-                    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-                    "Access-Control-Allow-Origin": req.headers.origin, //or the specific origin you want to give access to,
-                    "Access-Control-Allow-Credentials": true
-                };
-                res.writeHead(200, headers);
-                res.end();
-            }
+            path: '/service/remote/orchestrator/socket.io'
         });
         this.io.on('connection', socket=>{
             socket.emit("init_ok");
@@ -104,19 +102,23 @@ class App{
         let port = "3443";
         let containerInfo:any = await this.checkIfExist(sessionID);
         if(!containerInfo) {
-            await new Promise((resolve, reject) => {
-                let portStr = "";
-                if(this.localhostMode){
-                    let newPort = "3444";
-                    portStr = "-p "+newPort+":"+port;
-                    port = newPort;
-                }
+            let portStr = "";
+            if(this.localhostMode){
+                let newPort = "3444";
+                portStr = "-p "+newPort+":"+port;
+                port = newPort;
+            }
+            let cmd = "docker run "+portStr+" -e width="+screenSizeX+" -e height="+screenSizeY+" --privileged --network="+this.networkName+" --name web-renderer-" + sessionID + " --rm registry.aptero.co/web-renderer:latest";
+            new Promise(() => {
                 //let bashCMD = " /bin/sh "+ "-c "+ "/usr/bin/xvfb-run -a -s \"-screen 0 "+screenSizeX+"x"+screenSizeY+"x24\" node_modules/.bin/electron . "+screenSizeX+" "+screenSizeY;
-                let cmd = "docker run "+portStr+" -e width="+screenSizeX+" -e height="+screenSizeY+" --privileged --network="+this.networkName+" --name web-renderer-" + sessionID + " --rm registry.aptero.co/web-renderer:latest";
                 console.log(cmd);
-                exec(cmd, (error, stdout, stderr) => {
-                    resolve(stdout);
-                });
+                exec(cmd);
+            });
+            //TODO find a beter way to wait for container creation
+            await new Promise(resolve => {
+                setTimeout(()=>{
+                    resolve(true)
+                },5000);
             });
         }
         containerInfo = await this.checkIfExist(sessionID);
@@ -126,12 +128,12 @@ class App{
             port = containerInfo.Ports[0].PublicPort;
         }
         const connectString = "http://"+ip+":"+port;
-        console.log(connectString);
+        console.log("connecting to renderer at"+connectString);
         let socket = ioClient.connect(connectString);
+        socket.on("frame", buffer => {
+            this.serverSocket.in("room-"+sessionID).emit("frame-"+sessionID,buffer);
+        });
         await new Promise((resolve, reject) => {
-            socket.on("frame", buffer => {
-                this.serverSocket.in("room-"+sessionID).emit("frame-"+sessionID,buffer);
-            });
             socket.once("init_ok",()=>{
                 console.log("init_ok on "+connectString + " / " +containerInfo.Id);
                 resolve(true);

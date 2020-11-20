@@ -5,21 +5,15 @@ const http = require("http");
 
 const expressapp = express();
 const cors = require('cors');
-expressapp.use(cors());
+expressapp.use(cors({
+    origin: (origin, callback)=>{
+        // allow requests with no origin
+        return callback(null, true);
+    }
+}));
 const server = http.createServer(expressapp);
 
-const io = require('socket.io')(server, {
-    // path: '/service/web-renderer/socket.io',
-    handlePreflightRequest: (req, res) => {
-        const headers = {
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-            "Access-Control-Allow-Origin": req.headers.origin, //or the specific origin you want to give access to,
-            "Access-Control-Allow-Credentials": true
-        };
-        res.writeHead(200, headers);
-        res.end();
-    }
-});
+const io = require('socket.io')(server);
 
 class App{
     constructor(){
@@ -53,9 +47,10 @@ class App{
     }
     setupSocket(){
         io.on('connection', socket=>{
+            console.log("Connection received");
             this.client = socket;
             socket.on('event',event=>{
-                console.log("event",event);
+                //console.log("event",event);
                 this.win.webContents.sendInputEvent(event);
             });
             socket.on('exit',()=>{
@@ -77,17 +72,12 @@ class App{
                 this.sendToClient('frame',this.last_paint);
             }
         });
-        if(io.origins) {
-            io.origins((origin, callback) => {
-                callback(null, true);
-            });
-        }
         io.listen(3443);
         console.log("ready on 3443");
     }
     sendToClient(message,data){
         if(this.client){
-            console.log(message,data);
+            //console.log(message,data);
             this.client.emit(message,data);
         }
     }
