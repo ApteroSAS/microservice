@@ -21,7 +21,7 @@ class App{
         this.docker.listContainers((err, containers) => {
             if(containers) {
                 containers.forEach((containerInfo) => {
-                    console.log(containerInfo);
+                    console.log(containerInfo.Names[0]);
                 });
             }
         });
@@ -67,10 +67,10 @@ class App{
         });
         this.io.on('connection', socket=>{
             socket.emit("init_ok");
-            socket.on("connect_screen",async (data: { localSessionID:string, remoteScreenSessionId: string,screenSizeX:number,screenSizeY:number })=>{
+            socket.on("connect_screen",async (data: { localSessionID:string, remoteScreenSessionId: string,screenSizeX:number,screenSizeY:number,startUrl:string })=>{
                 console.log("connect_screen",data);
                 socket.join("room-"+data.remoteScreenSessionId);
-                let controlSocket = await this.createOrRetrieveScreen(data.remoteScreenSessionId,data.screenSizeX,data.screenSizeY);
+                let controlSocket = await this.createOrRetrieveScreen(data.remoteScreenSessionId,data.screenSizeX,data.screenSizeY,data.startUrl);
                 socket.on("event-"+data.remoteScreenSessionId,(event)=>{
                     controlSocket.emit("event",event)
                 });
@@ -96,7 +96,7 @@ class App{
         });
     }
 
-    async createOrRetrieveScreen(sessionID,screenSizeX:number,screenSizeY:number){
+    async createOrRetrieveScreen(sessionID,screenSizeX:number,screenSizeY:number,startURL:string){
         screenSizeX = screenSizeX || 1024;
         screenSizeY = screenSizeY || 768;
         let port = "3443";
@@ -108,20 +108,19 @@ class App{
                 portStr = "-p "+newPort+":"+port;
                 port = newPort;
             }
-            let cmd = "docker run "+portStr+" -e width="+screenSizeX+" -e height="+screenSizeY+" --privileged --network="+this.networkName+" --name web-renderer-" + sessionID + " --rm registry.aptero.co/web-renderer:latest";
+            let cmd = "docker run -d "+portStr+" -e width="+screenSizeX+" -e height="+screenSizeY+" --privileged --network="+this.networkName+" --name web-renderer-" + sessionID + " --rm registry.aptero.co/web-renderer:latest";
             new Promise(() => {
                 //let bashCMD = " /bin/sh "+ "-c "+ "/usr/bin/xvfb-run -a -s \"-screen 0 "+screenSizeX+"x"+screenSizeY+"x24\" node_modules/.bin/electron . "+screenSizeX+" "+screenSizeY;
                 console.log(cmd);
                 exec(cmd);
             });
-            //TODO find a beter way to wait for container creation
-            await new Promise(resolve => {
-                setTimeout(()=>{
-                    resolve(true)
-                },5000);
-            });
         }
-        containerInfo = await this.checkIfExist(sessionID);
+        while (!containerInfo) {
+            await new Promise(resolve => {
+                setTimeout(resolve,300);
+            });
+            containerInfo = await this.checkIfExist(sessionID);
+        }
         let ip = containerInfo.NetworkSettings.Networks[this.networkName].IPAddress;
         if(this.localhostMode){
             ip="127.0.0.1";
@@ -130,12 +129,16 @@ class App{
         const connectString = "http://"+ip+":"+port;
         console.log("connecting to renderer at"+connectString);
         let socket = ioClient.connect(connectString);
-        socket.on("frame", buffer => {
-            this.serverSocket.in("room-"+sessionID).emit("frame-"+sessionID,buffer);
-        });
         await new Promise((resolve, reject) => {
             socket.once("init_ok",()=>{
                 console.log("init_ok on "+connectString + " / " +containerInfo.Id);
+                if(startURL){
+                    socket.emit("load-url",startURL);
+                }
+                socket.on("frame", buffer => {
+                    this.serverSocket.in("room-"+sessionID).emit("frame-"+sessionID,buffer);
+                });
+                socket.emit("repaint");
                 resolve(true);
             });
         });

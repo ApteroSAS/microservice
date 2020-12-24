@@ -56,6 +56,9 @@ class App{
             socket.on('exit',()=>{
                 process.exit(0);
             });
+            socket.on('repaint',()=>{
+                this.sendToClient('frame',this.last_paint);
+            });
             socket.on('load-url',url_string=>{
                 if(typeof url_string === "string"){
                     if(url_string.substr(0,7)!=="http://"&&url_string.substr(0,8)!=="https://"){
@@ -64,13 +67,13 @@ class App{
                     this.win.webContents.loadURL(url_string);
                 }
             });
-            socket.emit("init_ok");
             if(this.win){
                 this.sendToClient('did-navigate',this.win.webContents.getURL());
             }
             if(this.last_paint){
                 this.sendToClient('frame',this.last_paint);
             }
+            socket.emit("init_ok");
         });
         io.listen(3443);
         console.log("ready on 3443");
