@@ -23,9 +23,18 @@ const UserSchema = new Schema({
     },
     email:{
         type: String,
-        required: true
+        unique : true,
+        required: false
     },
     name:{
+        type: String,
+        required: false
+    },
+    signinURL:{
+        type: String,
+        required: false
+    },
+    lastUpdate:{
         type: String,
         required: false
     },

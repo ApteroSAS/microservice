@@ -8,10 +8,10 @@ let cors = require('cors');
 let feathers = require('@feathersjs/feathers');
 let express = require('@feathersjs/express');//let express = require('express');
 import mongoose from "mongoose";
-import UserDataBase from "@root/service/memes/UserDataBase";
-import UserApiService from "@root/service/memes/UserApiService";
+import UserDataBase from "@root/service/users/UserDataBase";
+import UserApiService from "@root/service/users/UserApiService";
 
-export const BUILD_VERSION = "1.0.0";
+export const BUILD_VERSION = "1.1.0";
 console.log(BUILD_VERSION);
 
 /////////
