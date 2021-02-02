@@ -10,19 +10,71 @@ export default class UserDataBase {
     start() {
     }
 
-    updateUser(accountId:string,email:string,signinURL:string){
+    async updateUser(accountId:string,email:string,signinURL:string){
+        return new Promise<String>(async (resolve, reject) => {
+            if(!email){
+                reject("no email")
+            }
+            //try update accountID if both provided
+            let promises = []
+            if (accountId) {
+                promises.push(this.updateUserId(email, accountId));
+            }
+            if (email) {
+                promises.push(this.updateUserEmail(email, email));
+            }
+            if (signinURL) {
+                promises.push(this.updateUserSignInURL(email, signinURL));
+            }
+            return Promise.all(promises);
+        });
+    }
+
+    findUserByMail(mail):Promise<String>{
+        return new Promise<String>((resolve, reject) => {
+            userDB.find({ email: mail}).then(user=>{
+                resolve(user.accountId);
+            }).catch(err => {
+                reject(err);
+            });
+        });
+    }
+
+    updateEmailToAccountId(accountId:string,email:string){
+        return new Promise<String>((resolve, reject) => {
+            if(accountId===email){
+                resolve("ok");
+            }else {
+                if (accountId === "" || !accountId || email === "" || !email) {
+                    reject("wrong id :" + accountId + " / " + email);
+                } else {
+                    console.log("update : "+accountId+"/"+email)
+                    userDB.updateOne({accountId: email}, {
+                        accountId: accountId,
+                        lastUpdate: new Date().toISOString(),
+                    }, {upsert: true, setDefaultsOnInsert: true}).then(() => {
+                        resolve("ok");
+                    }).catch(err => {
+                        reject(err);
+                    });
+                }
+            }
+        });
+    }
+
+    updateUserId(accountId:string,userId:string){
         return new Promise<String>((resolve, reject) => {
             if (accountId === "" || !accountId) {
                 reject("wrong id :" + accountId);
             }else {
-                let promises = []
-                if (email) {
-                    promises.push(this.updateUserEmail(accountId, email));
-                }
-                if (signinURL) {
-                    promises.push(this.updateUserSignInURL(accountId, signinURL));
-                }
-                return Promise.all(promises);
+                userDB.updateOne({accountId: accountId}, {
+                    userId: userId,
+                    lastUpdate: new Date().toISOString(),
+                }, {upsert: true, setDefaultsOnInsert: true}).then(() => {
+                    resolve("ok");
+                }).catch(err => {
+                    reject(err);
+                });
             }
         });
     }
@@ -43,7 +95,6 @@ export default class UserDataBase {
             }
         });
     }
-
 
     updateUserSignInURL(accountId:string,signinURL:string){
         return new Promise<String>((resolve, reject) => {

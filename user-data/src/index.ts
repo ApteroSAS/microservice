@@ -11,7 +11,7 @@ import mongoose from "mongoose";
 import UserDataBase from "@root/service/users/UserDataBase";
 import UserApiService from "@root/service/users/UserApiService";
 
-export const BUILD_VERSION = "1.1.0";
+export const BUILD_VERSION = "1.2.0";
 console.log(BUILD_VERSION);
 
 /////////

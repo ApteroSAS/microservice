@@ -24,7 +24,7 @@ export default class UserApiService {
             let mail = json.mail;
             let signinurl = json.signinurl;
             let name = json.name;
-            if(accountId) {
+            if(mail) {
                 this.userdb.updateUser(accountId, mail, signinurl).then((user) => {
                     res.json(user);
                 }).catch((err) => {
@@ -32,7 +32,7 @@ export default class UserApiService {
                     res.status(500).json(err);
                 });
             }else{
-                console.error("no user id or email");
+                console.error("no email");
                 res.status(500).json("no user id or email");
             }
         });

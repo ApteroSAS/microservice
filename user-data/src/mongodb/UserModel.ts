@@ -23,7 +23,10 @@ const UserSchema = new Schema({
     },
     email:{
         type: String,
-        unique : true,
+        required: false
+    },
+    userId:{
+        type: String,
         required: false
     },
     name:{
