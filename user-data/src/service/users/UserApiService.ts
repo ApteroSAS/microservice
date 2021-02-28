@@ -28,13 +28,56 @@ export default class UserApiService {
             let name = json.name;
             if(mail) {
                 if(signinurl && mail){
-                    const msg = "Merci d'utiliser Aptero! Afin de vous connecter, veuillez suivre le lien suivant. Vous pouvez ignorer cet e-mail si vous ne souhaitez pas vous connecter. :<br/><link><br/><br/>Thanks for using Aptero! To sign-in to aptero, please visit the link below. If you did not make this request, please ignore this e-mail.<br/><link>"
+                    const msg = " Merci d'utiliser Aptero! \n" +
+                        " Afin de vous connecter, veuillez suivre le lien suivant. \n" +
+                        " %link% \n" +
+                        " Vous pouvez ignorer cet e-mail si vous ne souhaitez pas vous connecter:\n" +
+                        " Thanks for using Aptero! \n" +
+                        " To sign-in to aptero, please visit the link below. \n" +
+                        " %link% \n" +
+                        " If you did not make this request, please ignore this e-mail.\n";
+
+                    const msgHtml = "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n" +
+                        "<html data-editor-version=\"2\" class=\"sg-campaigns\" xmlns=\"http://www.w3.org/1999/xhtml\">\n" +
+                        "    <head>\n" +
+                        "      <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n" +
+                        "      <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1\">\n" +
+                        "      <!--[if !mso]><!-->\n" +
+                        "      <meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\">\n" +
+                        "      <!--<![endif]-->\n" +
+                        "      <!--[if (gte mso 9)|(IE)]>\n" +
+                        "      <xml>\n" +
+                        "        <o:OfficeDocumentSettings>\n" +
+                        "          <o:AllowPNG/>\n" +
+                        "          <o:PixelsPerInch>96</o:PixelsPerInch>\n" +
+                        "        </o:OfficeDocumentSettings>\n" +
+                        "      </xml>\n" +
+                        "      <![endif]-->\n" +
+                        "      <!--[if (gte mso 9)|(IE)]>\n" +
+                        "  <style type=\"text/css\">\n" +
+                        "    body {width: 600px;margin: 0 auto;}\n" +
+                        "    table {border-collapse: collapse;}\n" +
+                        "    table, td {mso-table-lspace: 0pt;mso-table-rspace: 0pt;}\n" +
+                        "    img {-ms-interpolation-mode: bicubic;}\n" +
+                        "  </style>\n" +
+                        "<![endif]-->\n" +
+                        "    </head><body>" +
+                        "<strong>Merci d'utiliser Aptero!</strong> <br/>" +
+                        "Afin de vous connecter, veuillez suivre le lien suivant.<br/>" +
+                        '<a href="%link%">Cliquez ici pour vous connecter</a><br/>' +
+                        " Vous pouvez ignorer cet e-mail si vous ne souhaitez pas vous connecter. <br/>" +
+                        "<br/><br/>" +
+                        "<strong>Thanks for using Aptero!</strong> <br/>" +
+                        "To sign-in to Aptero, please visit the link below.<br/>" +
+                        '<a href="%link%">Click here to connect</a><br/>' +
+                        " If you did not make this request, please ignore this e-mail.<br/>" +
+                        "</body></html>";
                     axios.post(properties.MAIL_SERVICE+"/mail",{
                         to: mail,
                         from: "admin@aptero.co",
-                        subject: "sign-in to Aptero",
-                        text: msg.replace("<link>",signinurl),
-                        html: msg.replace("<link>",signinurl),
+                        subject: "Sign-in to Aptero",
+                        text: msg.replace("%link%",signinurl).replace("%link%",signinurl),
+                        html: msgHtml.replace("%link%",signinurl).replace("%link%",signinurl),
                     })
                 }
                 this.userdb.updateUser(accountId, mail, signinurl).then((user) => {

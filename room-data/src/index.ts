@@ -11,7 +11,7 @@ import mongoose from "mongoose";
 import RoomDataBase from "@root/service/room/RoomDataBase";
 import RoomApiService from "@root/service/room/RoomApiService";
 
-export const BUILD_VERSION = "1.0.0";
+export const BUILD_VERSION = require('../package.json').version;
 console.log(BUILD_VERSION);
 
 /////////

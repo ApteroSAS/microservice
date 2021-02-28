@@ -17,7 +17,7 @@ export default class RoomDataBase {
                 return;
             }
             //TODO create or update
-            let result = await roomDB.findOne({roomSID: roomSID}).exec();
+            let result:any = await roomDB.findOne({roomSID: roomSID}).exec();
             resolve(result);
         });
     }

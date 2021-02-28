@@ -27,6 +27,7 @@ export default class RoomApiService {
                     html: '<strong>and easy to do anywhere, even with Node.js</strong>',
                 }*/
                 this.mailService.sendMail(json).then(()=>{
+                    console.log("mail send :"+json);
                     res.json("ok");
                 }).catch(err =>{
                     console.error(err);
