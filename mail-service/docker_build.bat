@@ -8,4 +8,4 @@ call npm outdated
 rem call yarn run test
 
 rem RUN DOCKER
-docker build -t mail-service-data .
+docker build -t mail-service .

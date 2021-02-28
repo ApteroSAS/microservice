@@ -1,13 +1,14 @@
-FROM risingstack/alpine:3.7-v8.10.0-4.8.0
+FROM node:14.16
 
 ENV PORT 8086
 EXPOSE 8086
 
-COPY ./node_modules ./node_modules
+#COPY ./node_modules ./node_modules
 
 COPY ./package.json ./package.json
 COPY ./package-lock.json ./package-lock.json
 COPY ./tsconfig.json ./tsconfig.json
+RUN npm install
 
 COPY ./src ./src
 RUN npm run build

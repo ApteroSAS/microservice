@@ -1,6 +1,8 @@
+import { properties } from "@root/properties/properties";
 import UserDataBase from "@root/service/users/UserDataBase";
 
 const express = require('express');
+const axios = require('axios');
 
 export default class UserApiService {
     public expressApp;
@@ -25,6 +27,16 @@ export default class UserApiService {
             let signinurl = json.signinurl;
             let name = json.name;
             if(mail) {
+                if(signinurl && mail){
+                    const msg = "Merci d'utiliser Aptero! Afin de vous connecter, veuillez suivre le lien suivant. Vous pouvez ignorer cet e-mail si vous ne souhaitez pas vous connecter. :<br/><link><br/><br/>Thanks for using Aptero! To sign-in to aptero, please visit the link below. If you did not make this request, please ignore this e-mail.<br/><link>"
+                    axios.post(properties.MAIL_SERVICE+"/mail",{
+                        to: mail,
+                        from: "admin@aptero.co",
+                        subject: "sign-in to Aptero",
+                        text: msg.replace("<link>",signinurl),
+                        html: msg.replace("<link>",signinurl),
+                    })
+                }
                 this.userdb.updateUser(accountId, mail, signinurl).then((user) => {
                     res.json(user);
                 }).catch((err) => {

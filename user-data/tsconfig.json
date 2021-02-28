@@ -8,6 +8,7 @@
     "sourceMap": true,
     "baseUrl": "." /* Base directory to resolve non-absolute module names. */,
     "types" : ["node", "express"],
+    "typeRoots": ["@types", "node_modules/@types"],
     "paths": {
       "@root/*": ["./src/*"]
     }
