@@ -1,0 +1,1 @@
+docker run -p 8081:80 -p 3443:3443 --network="web_renderer_network" -v /var/run/docker.sock:/var/run/docker.sock --name aptero-service-remote-orchestrator-v2 aptero-service-remote-orchestrator-v2:latest
