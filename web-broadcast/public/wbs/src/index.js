@@ -35,13 +35,12 @@ function WBS (element, opts) {
 
   self._display.on('stream', function (stream) {
     self.emit('stream', stream)
-    const url = "rtmp://rtmp.aptero.co:1935/stream/testph";
     rtmp.connectServer();
-    rtmp.startStreaming(stream,url);
+    rtmp.startStreaming(stream);
   })
   self._display.on('stopstream', function () {
     self.emit('stopstream')
-    rtmp.stopStream();
+    rtmp.stopStreaming();
   })
 }
 

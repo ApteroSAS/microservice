@@ -9,6 +9,7 @@ var Sources = require('./widgets/sources')
 var Transitions = require('./widgets/transitions')
 var MixerPanel = require('./widgets/mixerPanel')
 var Controls = require('./widgets/controls')
+var Links = require('./widgets/links')
 
 inherits(Display, EventEmitter)
 
@@ -24,6 +25,7 @@ function Display (element, opts) {
   self.mixerPanel = new MixerPanel(opts)
   self.transitions = new Transitions(opts)
   self.controls = new Controls(opts)
+  self.links = new Links(opts)
   
   self.sources.ready()
   
@@ -35,7 +37,8 @@ function Display (element, opts) {
                     self.scenes.element,
                     self.sources.element,
                     self.mixerPanel.element,
-                    self.transitions.element,
+                    //self.transitions.element,
+                    self.links.element,
                     self.controls.element))
 
   element.appendChild(self.element)
@@ -61,7 +64,9 @@ function Display (element, opts) {
   self.controls.on('stopstream', function () {
     self.emit('stopstream')
   })
-
+  
+  var scene = self.scenes._createScene();
+  self._changeScene(scene);
 }
 
 Display.prototype._changeScene = function (scene) {

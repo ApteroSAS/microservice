@@ -5,10 +5,15 @@ const io = require('socket.io-client');
 inherits(Rtmp, EventEmitter)
 
 const socket_address = "/";
+const rtmpBaseUpload = "rtmp://rtmp.aptero.co:1935/stream/";
+const rtmpBaseLink = "https://rtmp.aptero.co/live/";//.m3u8
 
 function Rtmp() {
   var self = this
   self.socket = null
+  self.url = null
+  self.token = null
+  self.generateUrls();
 }
 
 Rtmp.prototype.stopStreaming = function () {
@@ -16,29 +21,56 @@ Rtmp.prototype.stopStreaming = function () {
   self.mediaRecorder.stop();
 }
 
-Rtmp.prototype.startStreaming = function (stream, url) {
+function makeid(length) {
+  var result           = '';
+  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+     result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+
+Rtmp.prototype.getHttpLink = function () {
   var self = this
+  return rtmpBaseLink+self.token+".m3u8"
+}
+
+Rtmp.prototype.getRtmpLink = function () {
+  var self = this
+  return self.url;
+}
+
+Rtmp.prototype.generateUrls = function () {
+  var self = this
+  self.token = makeid(8);
+  self.url = rtmpBaseUpload+self.token;
+}
+
+Rtmp.prototype.startStreaming = function (stream) {
+  var self = this
+  var url = self.url;
   self.socket.emit('config_rtmpDestination', url);
   self.socket.emit('start', 'start');
-  mediaRecorder = new MediaRecorder(stream);
-  mediaRecorder.start(250);
+  self.mediaRecorder = new MediaRecorder(stream);
+  self.mediaRecorder.start(250);
 
-  mediaRecorder.onstop = function (e) {
+  self.mediaRecorder.onstop = function (e) {
     console.log("stopped!");
     console.log(e);
   }
 
-  mediaRecorder.onpause = function (e) {
+  self.mediaRecorder.onpause = function (e) {
     console.log("media recorder paused!!");
     console.log(e);
   }
 
-  mediaRecorder.onerror = function (event) {
+  self.mediaRecorder.onerror = function (event) {
     let error = event.error;
     console.log("error", error.name);
   };
 
-  mediaRecorder.ondataavailable = function (e) {
+  self.mediaRecorder.ondataavailable = function (e) {
     self.socket.emit("binarystream", e.data);
     state = "start";
   }

@@ -56,6 +56,7 @@ Scenes.prototype._createScene = function () {
   
   self.counter++
   self.list.addOption('Scene '+self.counter, newScene)
+  return newScene;
 }
 
 Scenes.prototype._destroyScene = function (scene) {
