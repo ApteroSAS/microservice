@@ -1,0 +1,45 @@
+FROM ubuntu:20.04
+
+RUN apt update -y
+RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
+
+##################
+##install node
+##################
+#https://github.com/nodesource/distributions/blob/master/README.md#debinstall
+RUN apt install -y nodejs
+RUN apt install -y npm
+
+##################
+##install ngingx
+##################
+RUN apt install -y nginx
+
+##################
+##install service
+##################
+COPY ./package.json ./package.json
+COPY ./package-lock.json ./package-lock.json
+RUN npm i
+
+##################
+##install ffmpeg
+##################
+RUN apt install -y ffmpeg
+
+##################
+##ngingx conf
+##################
+COPY ./reverse_proxy_conf/nginx.conf /etc/nginx/nginx.conf
+COPY ./reverse_proxy_conf/conf.d /etc/nginx/conf.d/
+
+##################
+##copy service
+##################
+COPY ./public /usr/share/nginx/html
+COPY ./server.js ./server.js
+
+COPY ./startup.sh ./
+ENV PORT 3443
+EXPOSE 3443
+CMD ./startup.sh
