@@ -87,34 +87,7 @@ io.on('connection', function(socket){
 		}
 		console.log(audioEncoding, audioBitrate);
 		console.log('framerate on node side', framerate);
-		//var ops = [];
-		if (framerate == 1){
-			var ops = [
-				'-i','-',
-				 '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency', 
-				//'-max_muxing_queue_size', '1000', 
-				//'-bufsize', '5000',
-			       '-r', '1', '-g', '2', '-keyint_min','2', 
-					'-x264opts', 'keyint=2', '-crf', '25', '-pix_fmt', 'yuv420p',
-			        '-profile:v', 'baseline', '-level', '3', 
-     				'-c:a', 'aac', '-b:a', audioEncoding, '-ar', audioBitrate, 
-			        '-f', 'flv', socket._rtmpDestination		
-			];
-			
-		}else if (framerate == 15){
-			var ops = [
-				'-i','-',
-				 '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency', 
-				'-max_muxing_queue_size', '1000', 
-				'-bufsize', '5000',
-			       '-r', '15', '-g', '30', '-keyint_min','30', 
-					'-x264opts', 'keyint=30', '-crf', '25', '-pix_fmt', 'yuv420p',
-			        '-profile:v', 'baseline', '-level', '3', 
-     				'-c:a', 'aac', '-b:a',audioEncoding, '-ar', audioBitrate, 
-			        '-f', 'flv', socket._rtmpDestination		
-			];
-			
-		}else{
+
 			var ops = [
 				'-i','-',
 				 '-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency', 
@@ -126,7 +99,7 @@ io.on('connection', function(socket){
      				'-c:a', 'aac', '-b:a',audioEncoding, '-ar', audioBitrate, 
 			        '-f', 'flv', socket._rtmpDestination		
 			];
-		   var opsold=[
+		   /*var opsold=[
 			 '-i','-',
 			//'-c', 'copy', 
 			'-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency',  // video codec config: low latency, adaptive bitrate
@@ -138,8 +111,9 @@ io.on('connection', function(socket){
 			//'-filter_complex', 'aresample=44100', // resample audio to 44100Hz, needed if input is not 44100
 			//'-strict', 'experimental', 
 			'-bufsize', '5000',
-			'-f', 'flv', socket._rtmpDestination
-			/*. original params
+			'-f', 'flv', socket._rtmpDestination			
+		];*/
+        			/*. original params
 			'-i','-',
 			'-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'zerolatency',  // video codec config: low latency, adaptive bitrate
 			'-c:a', 'aac', '-ar', '44100', '-b:a', '64k', // audio codec config: sampling frequency (11025, 22050, 44100), bitrate 64 kbits
@@ -151,8 +125,6 @@ io.on('connection', function(socket){
 			'-bufsize', '1000',
 			'-f', 'flv', socket._rtmpDestination
 			*/
-			
-		];
 	}
 	console.log("ops", ops);
 		console.log(socket._rtmpDestination);
@@ -208,10 +180,6 @@ io.on('connection', function(socket){
 io.on('error',function(e){
 	console.log('socket.io error:'+e);
 });
-
-//http.listen(8888, function(){
-//  console.log('http and websocket listening on *:8888');
-//});
 
 server.listen(1437, function(){
   console.log('https and websocket listening on *:1437');
