@@ -33,6 +33,14 @@ function WBS (element, opts) {
 
   self._display = new Display(element, opts)
 
+  rtmp.onStop = ()=>{
+    console.log("Stopped From Server");
+    self._display.controls.stopStream();
+  };
+  rtmp.onAlreadyInUse = ()=>{
+    console.log("Already in use");
+    alert("RTMP flux is already in use");
+  };
   self._display.on('stream', function (stream) {
     self.emit('stream', stream)
     rtmp.connectServer();

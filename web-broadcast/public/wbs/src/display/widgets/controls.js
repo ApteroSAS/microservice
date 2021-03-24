@@ -22,6 +22,16 @@ function Controls () {
                   )
 }
 
+Controls.prototype.stopStream = function () {
+  var self = this
+
+  if (self._startedStream) {
+    self._startButton.innerHTML = 'Start Streaming'
+    self._startButton.className = 'stopped'
+    self._startedStream = false;
+  }
+}
+
 Controls.prototype.clickStream = function () {
   var self = this
   

@@ -13,12 +13,18 @@ function Rtmp() {
   self.socket = null
   self.url = null
   self.token = null
+  self.onStop = ()=>{};
+  self.onAlreadyInUse = () => {};
   self.generateUrls();
 }
 
 Rtmp.prototype.stopStreaming = function () {
   var self = this
-  self.mediaRecorder.stop();
+  if(self.socket) {
+    self.socket.disconnect();
+    self.socket = null;
+    self.onStop();
+  }
 }
 
 function makeid(length) {
@@ -33,7 +39,11 @@ function makeid(length) {
 
 Rtmp.prototype.getHttpLink = function () {
   var self = this
-  return rtmpBaseLink+self.token+".m3u8"
+  if(self.url.startsWith("rtmp://rtmp.aptero.co:1935/stream/")) {
+    return rtmpBaseLink + self.token + ".m3u8"
+  }else{
+    return "N/C";
+  }
 }
 
 Rtmp.prototype.getRtmpLink = function () {
@@ -41,10 +51,17 @@ Rtmp.prototype.getRtmpLink = function () {
   return self.url;
 }
 
+Rtmp.prototype.generateUrlFromLastToken = function () {
+  var self = this
+  self.token = self.lastToken;
+  self.url = rtmpBaseUpload+self.token;
+}
+
 Rtmp.prototype.generateUrls = function () {
   var self = this
   self.token = makeid(8);
   self.url = rtmpBaseUpload+self.token;
+  self.lastToken = self.token;
 }
 
 Rtmp.prototype.startStreaming = function (stream) {
@@ -58,6 +75,10 @@ Rtmp.prototype.startStreaming = function (stream) {
   self.mediaRecorder.onstop = function (e) {
     console.log("stopped!");
     console.log(e);
+    if(self.socket) {
+      self.socket.disconnect();
+      self.onStop();
+    }
   }
 
   self.mediaRecorder.onpause = function (e) {
@@ -68,11 +89,29 @@ Rtmp.prototype.startStreaming = function (stream) {
   self.mediaRecorder.onerror = function (event) {
     let error = event.error;
     console.log("error", error.name);
+    if(self.socket) {
+      self.socket.disconnect();
+      self.onStop();
+    }
   };
 
   self.mediaRecorder.ondataavailable = function (e) {
-    self.socket.emit("binarystream", e.data);
-    state = "start";
+    if(self.socket) {
+      self.socket.emit("binarystream", e.data);
+      state = "start";
+    }
+  }
+}
+
+Rtmp.prototype.changeInputLink= function  (value) {
+  var self = this;
+  if(value==="") {
+    self.generateUrlFromLastToken();
+  }else if(value.startsWith("rtmp://rtmp.aptero.co:1935/stream/")){
+    self.token = value.replace("rtmp://rtmp.aptero.co:1935/stream/","");
+    self.url = rtmpBaseUpload+self.token;
+  }else {
+    self.url = value;
   }
 }
 
@@ -122,11 +161,17 @@ Rtmp.prototype.connectServer = function () {
     console.log("state on fatal error= " + state);
     //already stopped and inactive
     console.log('media recorder restarted');
+    if(self.mediaRecorder) {
+      self.mediaRecorder.stop();
+      self.mediaRecorder = null;
+      self.onStop();
+      self.onAlreadyInUse();
+    }
 
-    if (oo.checked) {
+    /*if (oo.checked) {
       //timedCount();
       console.log("server is reloading!");
-    }
+    }*/
     //should reload?
   });
 
@@ -139,9 +184,14 @@ Rtmp.prototype.connectServer = function () {
     console.log("state disconec= " + state);
     console.log('ERROR: server disconnected!');
     console.log('ERROR: server disconnected!' + reason);
-    recordingCircle.style.fill = 'gray';
+
+    if(self.mediaRecorder) {
+      self.mediaRecorder.stop();
+      self.mediaRecorder = null;
+      self.onStop();
+    }
     //reconnect the server
-    connect_server();
+    //connect_server();
 
     //socket.open();
     //mediaRecorder.stop();
@@ -150,11 +200,11 @@ Rtmp.prototype.connectServer = function () {
     //button_server.disabled=false;
     //	document.getElementById('button_start').disabled=true;　
     //var oo=document.getElementById("checkbox_Reconection");
-    if (oo.checked) {
+    /*if (oo.checked) {
       //timedCount();
       output_message.innerHTML = "server is reloading!";
       console.log("server is reloading!");
-    }
+    }*/
   });
 
   state = "ready";
