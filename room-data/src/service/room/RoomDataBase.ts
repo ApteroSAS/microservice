@@ -23,4 +23,19 @@ export default class RoomDataBase {
     }
 
 
+    onRoomUpdate(callback: (room) => void) {
+        roomDB.watch().on('change', (data:any) =>{
+            //console.log(new Date(), data)
+            callback(data.fullDocument);
+        });
+    }
+
+    async getRooms() {
+        let ret = [];
+        let documents = await roomDB.find({ });
+        documents.forEach((document:any) => {
+            ret.push(document._doc);
+        });
+        return ret
+    }
 }

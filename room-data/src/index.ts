@@ -1,6 +1,7 @@
 import 'module-alias/register';
 import {properties} from "@root/properties/properties";
 import {RoomModel} from "@root/mongodb/RoomModel";
+
 let socketio = require('@feathersjs/socketio');
 let bodyParser = require('body-parser');
 
@@ -10,6 +11,11 @@ let express = require('@feathersjs/express');//let express = require('express');
 import mongoose from "mongoose";
 import RoomDataBase from "@root/service/room/RoomDataBase";
 import RoomApiService from "@root/service/room/RoomApiService";
+import PostgrestController from "@root/postgrest/PostgrestController";
+import {PgRoom} from "@root/postgrest/PgRoom";
+import AutoOpenService from "@root/service/room/AutoOpenService";
+import {JWTAuth} from "@root/jwt/JWTAuth";
+import PhoenixController from "@root/phoenix/PhoenixController";
 
 export const BUILD_VERSION = require('../package.json').version;
 console.log(BUILD_VERSION);
@@ -24,18 +30,15 @@ const models = {
 
 // Connect to MongoDB with Mongoose.
 mongoose.connect(
-        db,
-        {
-            useUnifiedTopology: true,
-            useCreateIndex: true,
-            useNewUrlParser: true
-        }
-    ).then(() => {
-        console.log("MongoDB connected")
-    }).catch(err => console.log(err));
-
-
-////////
+    db,
+    {
+        useUnifiedTopology: true,
+        useCreateIndex: true,
+        useNewUrlParser: true
+    }
+).then(() => {
+    console.log("MongoDB connected")
+}).catch(err => console.log(err));
 
 let expressApp = express(feathers());
 expressApp.use(bodyParser.json());
@@ -51,10 +54,19 @@ process.on('unhandledRejection', (reason, p) => {
     console.error(reason);
 });
 
+
 let port = 8186;
 expressApp.listen(port, () => {
     let db = new RoomDataBase();
     let apiService: RoomApiService = new RoomApiService(db);
     apiService.start(expressApp);
-    console.log('Listening on '+port);
+
+    let jwtAuth = new JWTAuth(properties.JWT_SECRET);
+    let phoenixController = new PhoenixController(jwtAuth, properties.ADMIN_USER,"6f016efef5a501bd");
+    let postgrestController: PostgrestController = new PostgrestController(jwtAuth, properties.POSTGREST_HOST);
+    let pgRoom = new PgRoom(postgrestController);
+
+    let auto: AutoOpenService = new AutoOpenService(pgRoom, db, phoenixController);
+
+    console.log('Listening on ' + port);
 });
