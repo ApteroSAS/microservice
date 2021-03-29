@@ -34,8 +34,8 @@ export default class AutoOpenService {
     }
 
     async detachAutoOpener(hubID:string){
-        console.log("DetachAutoOpener : "+hubID);
         if(this.channels[hubID]){
+            console.log("DetachAutoOpener : "+hubID);
             let channel = this.channels[hubID]
             channel.leave();
             delete this.channels[hubID];

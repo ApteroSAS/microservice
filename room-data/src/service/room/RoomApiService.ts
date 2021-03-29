@@ -1,4 +1,6 @@
 import RoomDataBase from "@root/service/room/RoomDataBase";
+import {PgRoom} from "@root/postgrest/PgRoom";
+import {JWTAuth} from "@root/jwt/JWTAuth";
 
 const express = require('express');
 
@@ -6,7 +8,7 @@ export default class RoomApiService {
     public expressApp;
     public feathersApp: any = null;
 
-    constructor(public roomDB:RoomDataBase) {
+    constructor(public roomDB:RoomDataBase,private pgRoom:PgRoom,private jwt:JWTAuth) {
     }
 
     mountAPI() {
@@ -21,6 +23,29 @@ export default class RoomApiService {
             let json = req.body;
             let roomSID = json.roomSID;
             this.roomDB.findRoom(roomSID).then((room) => {
+                res.json(room);
+            }).catch((err) => {
+                res.status(500).json(err);
+            });
+        });
+
+        router.post('/room/update', async (req, res) => {
+            let json = req.body;
+            let jwt = json.jwt;
+            //https://jwt.io/
+            /*
+            header {
+              "alg": "HS512",
+              "typ": "JWT"
+            }
+            payload:{
+              "iss":"aptero",
+              "hubSID":"vGgHMPT",
+              "data":{"entry_mode":"invite"}
+            }
+             */
+            let payload:any = await this.jwt.verifyAndDecode(jwt);
+            this.pgRoom.updateRoom(payload.hubSID,payload.data).then((room) => {
                 res.json(room);
             }).catch((err) => {
                 res.status(500).json(err);

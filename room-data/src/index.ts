@@ -58,15 +58,15 @@ process.on('unhandledRejection', (reason, p) => {
 let port = 8186;
 expressApp.listen(port, () => {
     let db = new RoomDataBase();
-    let apiService: RoomApiService = new RoomApiService(db);
-    apiService.start(expressApp);
-
     let jwtAuth = new JWTAuth(properties.JWT_SECRET);
-    let phoenixController = new PhoenixController(jwtAuth, properties.ADMIN_USER,"6f016efef5a501bd");
+    let phoenixController = new PhoenixController(jwtAuth, properties.ADMIN_USER, "6f016efef5a501bd");
     let postgrestController: PostgrestController = new PostgrestController(jwtAuth, properties.POSTGREST_HOST);
     let pgRoom = new PgRoom(postgrestController);
 
     let auto: AutoOpenService = new AutoOpenService(pgRoom, db, phoenixController);
+
+    let apiService: RoomApiService = new RoomApiService(db, pgRoom, jwtAuth);
+    apiService.start(expressApp);
 
     console.log('Listening on ' + port);
 });

@@ -1,5 +1,6 @@
 import {JWK, parseJwk} from 'jose/jwk/parse'
 import {SignJWT} from 'jose/jwt/sign'
+import {jwtVerify} from 'jose/jwt/verify'
 import {KeyLike} from "crypto";
 
 export class JWTAuth {
@@ -46,5 +47,13 @@ export class JWTAuth {
             'role': 'postgres'
         }).setProtectedHeader({alg: this.alg, typ: "JWT"}).sign(privateKey);
         return jwt;
+    }
+
+    async verifyAndDecode(jwt: string) {
+        let publicKey = await this.getSecret();
+        const { payload, protectedHeader } = await jwtVerify(jwt, publicKey, {
+            issuer: 'aptero',
+        });
+        return payload;
     }
 }
