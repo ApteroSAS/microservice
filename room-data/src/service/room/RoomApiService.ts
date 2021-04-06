@@ -44,7 +44,7 @@ export default class RoomApiService {
               "data":{"entry_mode":"invite"}
             }
              */
-            let payload:any = await this.jwt.verifyAndDecode(jwt);
+            let payload:any = await this.jwt.verifyAndDecode(jwt,{issuer:"aptero"});
             this.pgRoom.updateRoom(payload.hubSID,payload.data).then((room) => {
                 res.json(room);
             }).catch((err) => {

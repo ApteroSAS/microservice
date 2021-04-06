@@ -1,7 +1,6 @@
 import {JWK, parseJwk} from 'jose/jwk/parse'
 import {SignJWT} from 'jose/jwt/sign'
-import {jwtVerify} from 'jose/jwt/verify'
-import {KeyLike} from "crypto";
+import {jwtVerify, JWTVerifyOptions} from 'jose/jwt/verify'
 
 export class JWTAuth {
     //alg = "HS256"
@@ -43,17 +42,17 @@ export class JWTAuth {
     async createPostgrestJWT(): Promise<String> {
         let privateKey = await this.getSecret();
         const jwt = await new SignJWT({
-            //'role': 'ret_admin'
-            'role': 'postgres'
+            //'role': 'ret_admin',
+            //'postgrest_role': 'ret_admin'
+            'role': 'postgres',
+            'postgrest_role': 'postgres'
         }).setProtectedHeader({alg: this.alg, typ: "JWT"}).sign(privateKey);
         return jwt;
     }
 
-    async verifyAndDecode(jwt: string) {
+    async verifyAndDecode(jwt: string,claimVerification:JWTVerifyOptions) {
         let publicKey = await this.getSecret();
-        const { payload, protectedHeader } = await jwtVerify(jwt, publicKey, {
-            issuer: 'aptero',
-        });
+        const { payload, protectedHeader } = await jwtVerify(jwt, publicKey, claimVerification);
         return payload;
     }
 }

@@ -113,6 +113,9 @@ Rtmp.prototype.changeInputLink= function  (value) {
   }else {
     self.url = value;
   }
+  const urlToConstruct = new URL(window.location.href);
+  urlToConstruct.searchParams.set("input",value);
+  window.history.pushState({}, null, urlToConstruct.toString());
 }
 
 Rtmp.prototype.connectServer = function () {

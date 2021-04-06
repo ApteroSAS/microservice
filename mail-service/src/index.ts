@@ -8,7 +8,7 @@ let cors = require('cors');
 import MailApiService from "@root/service/mail/MailApiService";
 import MailService from './service/mail/MailService';
 
-export const BUILD_VERSION = "1.0.0";
+export const BUILD_VERSION = require('../package.json').version;
 console.log(BUILD_VERSION);
 
 let expressApp = express();

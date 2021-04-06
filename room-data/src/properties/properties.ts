@@ -19,7 +19,7 @@ checkRequiredProperties();
 
 export let properties = {
     MONGODB: process.env.MONGODB ? process.env.MONGODB : "mongodb+srv://dev:sjkPbH1zh78vdKRY@apteromain-h7nsw.mongodb.net/aptero-dev?retryWrites=true",
-    POSTGREST_HOST: process.env.POSTGREST_HOST ? process.env.POSTGREST_HOST : "https://alphahub.aptero.co/postgrest",
+    POSTGREST_HOST: process.env.POSTGREST_HOST ? process.env.POSTGREST_HOST : "https://alphahub.aptero.co/service/db/postgrest",
     //JWT_SECRET: process.env.JWT_SECRET ? process.env.JWT_SECRET : "47iqPEdWcfE7xRnyaxKDLt9OGEtkQG3SycHBEMOuT2qARmoESnhc76IgCUjaQIwX",
     JWT_SECRET: process.env.JWT_SECRET ? process.env.JWT_SECRET : "HS512CBBBBcfE7xRnyaxKDLt9OGEtkQG3SycHBEMOuT2qARmoESnhc76IgCUjaQIwY57iqPEdWcfE7xRnyaxKDLt9OGEtkQG3SycHBEMOuT2qARmoESnhc76IgCUjaQI",
     ADMIN_USER: process.env.ADMIN_USER ? process.env.ADMIN_USER : "640407050966269961",
