@@ -16,6 +16,7 @@ import {PgRoom} from "@root/postgrest/PgRoom";
 import AutoOpenService from "@root/service/room/AutoOpenService";
 import {JWTAuth} from "@root/jwt/JWTAuth";
 import PhoenixController from "@root/phoenix/PhoenixController";
+import AutoUpdateService from "@root/service/room/AutoUpdateService";
 
 export const BUILD_VERSION = require('../package.json').version;
 console.log(BUILD_VERSION);
@@ -64,6 +65,7 @@ expressApp.listen(port, () => {
     let pgRoom = new PgRoom(postgrestController);
 
     let auto: AutoOpenService = new AutoOpenService(pgRoom, db, phoenixController);
+    new AutoUpdateService(pgRoom, db, phoenixController);
 
     let apiService: RoomApiService = new RoomApiService(db, pgRoom, jwtAuth);
     apiService.start(expressApp);

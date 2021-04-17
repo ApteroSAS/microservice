@@ -52,16 +52,18 @@ export class AWSAppStream {
                 "--session-context \""+data.sessionContext+"\"";
             console.log(cmd);
             exec(cmd,(error, stdout, stderr) => {
-                if(error){
+                if(error || stderr || !stdout){
                     console.error(error);
                     console.error(stderr);
+                    console.log(stdout);
                     reject(stderr);
+                }else {
+                    let result = JSON.parse(stdout);
+                    let data = result.StreamingURL;
+                    result.StreamingURLBase64 = new Buffer(data).toString('base64');
+                    console.log(result);
+                    resolve(result);
                 }
-                let result = JSON.parse(stdout);
-                let data = result.StreamingURL;
-                result.StreamingURLBase64 = new Buffer(data).toString('base64');
-                console.log(result);
-                resolve(result);
             });
         })
     }
