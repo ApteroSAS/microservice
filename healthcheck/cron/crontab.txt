@@ -1,0 +1,4 @@
+* * * * * /cron/script/script1.sh > /cron/log/script1.log 2>&1
+* * * * * /usr/bin/python3 /cron/script/script2.py > /cron/log/script2.log 2>&1
+
+*/15 * * * * /usr/bin/python3 /cron/script/room-service.py > /cron/log/room-service.log 2>&1
