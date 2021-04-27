@@ -135,8 +135,14 @@
         <script>
             function continueLink(){
                 const urlParams = new URLSearchParams(window.location.search);
-                const url = urlParams.get('url');
+                let url = "meet.aptero.co";
+                if(urlParams.get('urlb64')){
+                    url = atob(urlParams.get('urlb64'));
+                }else if(urlParams.get('url')){
+                    url = urlParams.get('url');
+                }
                 window.location.href = url;
+
             }
         </script>
     </head>
