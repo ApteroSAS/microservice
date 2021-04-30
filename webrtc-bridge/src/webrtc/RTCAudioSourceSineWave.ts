@@ -1,10 +1,6 @@
 'use strict';
 
 const {RTCAudioSource} = require('wrtc').nonstandard;
-// TODO merge audio use RTC sink
-// https://github.com/jackedgson/crunker (Use web audio api)
-// https://github.com/audiojs/audio-buffer (poly fill for audio buffer)
-// both code are very small we can use that directly without npm
 const twoPi = 2 * Math.PI;
 
 export default class RTCAudioSourceSineWave {

@@ -36,6 +36,7 @@ let connect = function() {
         db,
         {
             useUnifiedTopology: false,
+            useFindAndModify: false,
             useCreateIndex: true,
             useNewUrlParser: true,
             autoReconnect: true,
@@ -95,7 +96,7 @@ expressApp.listen(port, () => {
     let auto: AutoOpenService = new AutoOpenService(pgRoom, db, phoenixController);
     new AutoUpdateService(pgRoom, db, phoenixController);
 
-    let apiService: RoomApiService = new RoomApiService(db, pgRoom, jwtAuth);
+    let apiService: RoomApiService = new RoomApiService(db, pgRoom, jwtAuth, phoenixController);
     apiService.start(expressApp);
 
     console.log('Listening on ' + port);

@@ -1,6 +1,7 @@
 import * as mediasoupClient from "mediasoup-client";
 import ProtoSignaling from "@root/webrtc/ProtoSignaling";
 import {NodeWebRTCHandler} from "@root/webrtc/NodeWebRTCHandler";
+const MediaStream = require('wrtc').MediaStream;
 
 const PC_PROPRIETARY_CONSTRAINTS = {
     optional: [{ googDscp: true }]
@@ -84,6 +85,10 @@ export default class DialogAdapter {
     setServerConnectListeners(successListener, failureListener) {
         this._connectSuccess = successListener;
         this._connectFailure = failureListener;
+    }
+
+    setOnOccupantConnected(openListener) {
+        this._onOccupantConnected = openListener;
     }
 
     setDataChannelListeners(openListener, closedListener, messageListener) {
@@ -273,8 +278,8 @@ export default class DialogAdapter {
     }
 
     newPeer(peer) {
-        this._onOccupantConnected(peer.id);
         this.occupants[peer.id] = peer;
+        this._onOccupantConnected(peer.id);
 
         if (this._onOccupantsChanged) {
             this._onOccupantsChanged(this.occupants);
@@ -524,7 +529,6 @@ export default class DialogAdapter {
 
         if (!this._sendTransport) return;
         let sawAudio = false;
-        let sawVideo = false;
 
         if (track.kind === "audio") {
             sawAudio = true;
@@ -565,4 +569,40 @@ export default class DialogAdapter {
             this._micProducer = null;
         });
     }
+
+    async getMediaStream(clientId, kind = "audio"):Promise<any> {
+        let track;
+
+        if (this._clientId === clientId) {
+            if (kind === "audio" && this._micProducer) {
+                track = this._micProducer.track;
+            }
+        } else {
+            this._consumers.forEach(consumer => {
+                if (consumer.appData.peerId === clientId && kind == consumer.track.kind) {
+                    track = consumer.track;
+                }
+            });
+        }
+
+        if (track) {
+            console.debug(`Already had ${kind} for ${clientId}`);
+            return Promise.resolve(new MediaStream([track]));
+        } else {
+            console.debug(`Waiting on ${kind} for ${clientId}`);
+            if (!this._pendingMediaRequests.has(clientId)) {
+                this._pendingMediaRequests.set(clientId, {});
+            }
+
+            const requests = this._pendingMediaRequests.get(clientId);
+            const promise = new Promise((resolve, reject) => (requests[kind] = { resolve, reject }));
+            requests[kind].promise = promise;
+            promise.catch(e => {
+                this.emitRTCEvent("error", "Adapter", () => `getMediaStream error: ${e}`);
+                console.warn(`${clientId} getMediaStream Error`, e);
+            });
+            return promise;
+        }
+    }
+
 }

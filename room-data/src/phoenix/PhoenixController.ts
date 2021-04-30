@@ -99,6 +99,12 @@ export default class PhoenixController {
         });
     }
 
+    async sendMessageToRoomStandalone(roomSID:string,message:string){
+        let phxChannel = await this.connectToRoom(roomSID);
+        await phxChannel.push("message", {body: message, type: "chat"});
+        await phxChannel.leave();
+    }
+
     getPresence(hubPhxChannel): Presence {
         //console.log(data);
         /*hubPhxChannel.on("presence_state", newState => {

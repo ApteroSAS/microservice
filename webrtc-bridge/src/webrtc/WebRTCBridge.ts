@@ -3,32 +3,37 @@ import {properties} from "@root/properties/properties";
 import PhoenixController from "@root/phoenix/PhoenixController";
 import DialogAdapter from "@root/webrtc/DialogAdapter";
 import RTCAudioSourceSineWave from './rtcaudiosourcesinewave';
+import RTCCompoundAudioSource from "@root/webrtc/RTCCompoundAudioSource";
 
 export default class WebRTCBridge {
     jwtAuth = new JWTAuth(properties.JWT_SECRET);
     phoenixController = new PhoenixController(this.jwtAuth, properties.ADMIN_USER, "6f016efef5a501bd");
+    botList = {};
 
     async createBridge(roomA,roomB){
         let handleRoomA = await this.connect(roomA);
-        const source = new RTCAudioSourceSineWave();
-        const track = source.createTrack();
-        handleRoomA.setLocalMediaStream(track);
-        //let handleRoomB = await this.connect(roomB);
-        //this.createBridgeFromTo(handleRoomA,handleRoomB);
-        //this.createBridgeFromTo(handleRoomB,handleRoomA);
+        let handleRoomB = await this.connect(roomB);
+        this.createBridgeFromTo(handleRoomA,handleRoomB);
+        this.createBridgeFromTo(handleRoomB,handleRoomA);
     }
 
     async createBridgeFromTo(from,to){
-        const audioTransceiverFrom = from._recvTransport._handler._pc.addTransceiver('audio');
-        //const videoTransceiverFrom = from.peerConnection.addTransceiver('video');
-        const audioTransceiverTo = to._sendTransport._handler._pc.addTransceiver('audio');
-        //const videoTransceiverTo = to.peerConnection.addTransceiver('video');
-        await Promise.all([
-            audioTransceiverTo.sender.replaceTrack(audioTransceiverFrom.receiver.track),
-            //videoTransceiverTo.sender.replaceTrack(videoTransceiverFrom.receiver.track)
-        ]);
-        //from.setLocalMediaStream(audioTransceiverFrom.receiver);
-        to.setLocalMediaStream(audioTransceiverTo.sender);
+        let source = new RTCCompoundAudioSource();
+        from.setOnOccupantConnected(async (peer)=>{
+            console.log("new peer : "+peer,from)
+            let mediaStream = await from.getMediaStream(peer)
+            let tracks = mediaStream.getAudioTracks();
+            source.addTrack(peer,tracks[0]);
+        });
+        //Take a liste of ocuppant trac and send it to the others
+        const sinsource = new RTCAudioSourceSineWave();
+        //source.addTrack("sin",sinsource.createTrack());
+        const track = source.createTrack();
+        to.setLocalMediaStream(track);//TODO in hubs add the fact that the sin sound works everytimes
+    }
+
+    getBotList(){
+        return Object.keys(this.botList);
     }
 
     async connect(roomID){
@@ -39,10 +44,11 @@ export default class WebRTCBridge {
             entryDisplayType:"Screen",
             userAgent: "nodejs"
         };
+        this.botList[data.session_id]=true;
         await hubPhxChannel.push("message", {type:"distributed-system-bot-creation",body:data.session_id});
-        await hubPhxChannel.push("events:entering", {});
-        await hubPhxChannel.push("events:entered", entryEvent);
-        console.log("connect client : "+roomID, data.session_id, data.perms_token)
+        //await hubPhxChannel.push("events:entering", {});
+        //await hubPhxChannel.push("events:entered", entryEvent);
+        console.log("connect client : "+roomID, data.session_id, data.perms_token);
         let dialog = new DialogAdapter();
         dialog.setParams("wss://dedicatedwebrtc4.aptero.co", roomID, data.session_id, data.perms_token, {
             "host": "dedicatedwebrtc4.aptero.co",
