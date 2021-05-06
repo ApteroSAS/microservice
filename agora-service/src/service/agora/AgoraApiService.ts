@@ -1,4 +1,5 @@
 import AgoraService from "./AgoraService";
+import {properties} from "@root/properties/properties";
 
 const express = require('express');
 
@@ -14,6 +15,11 @@ export default class AgoraApiService {
         let apiVersion = this.version;//increment this each time you change the api and break the backward compatibility (semver)
         router.get('/api/version', (req, res) => {
             res.json(apiVersion);
+        });
+
+        router.get('/appid', (req, res) => {
+            const { identity, roomName } = req.query;
+            res.send(properties.AGORA_APPID);
         });
 
         router.get('/token', (req, res) => {

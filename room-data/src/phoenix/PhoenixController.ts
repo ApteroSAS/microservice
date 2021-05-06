@@ -1,6 +1,7 @@
 import * as phx from "phoenix-channels";
 import {Presence} from "@root/phoenix/Presence";
 import {JWTAuth} from "@root/jwt/JWTAuth";
+import {properties} from "@root/properties/properties";
 
 export default class PhoenixController {
     socket: phx.Socket;
@@ -9,7 +10,7 @@ export default class PhoenixController {
     }
 
     async connectToReticulum(params = null) {
-        let socketUrl = "wss://alphahub.aptero.co";
+        let socketUrl = properties.SOCKET_URL;
         console.log(`Phoenix Socket URL: ${socketUrl}`);
 
         const socketSettings: any = {};

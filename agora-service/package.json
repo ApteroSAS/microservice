@@ -1,6 +1,6 @@
 {
-  "name": "@aptero/service-mail",
-  "version": "1.0.0",
+  "name": "@aptero/service-agora",
+  "version": "1.1.0",
   "description": "",
   "main": "index.ts",
   "private": false,
