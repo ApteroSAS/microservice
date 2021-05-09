@@ -14,7 +14,7 @@ import BoundingBox from "@root/unliEngine/octree/BoundingBox";
 /// An object in the octree
 /// </summary>
 
-interface Equalable {
+export interface Equalable {
     equals(t:any):boolean
 }
 

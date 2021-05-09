@@ -2,7 +2,7 @@ import {JWTAuth} from "@root/jwt/JWTAuth";
 import {properties} from "@root/properties/properties";
 import PhoenixController from "@root/phoenix/PhoenixController";
 import DialogAdapter from "@root/webrtc/DialogAdapter";
-import RTCAudioSourceSineWave from './rtcaudiosourcesinewave';
+import RTCAudioSourceSineWave from './RTCAudioSourceSineWave';
 import RTCCompoundAudioSource from "@root/webrtc/RTCCompoundAudioSource";
 
 export default class WebRTCBridge {
