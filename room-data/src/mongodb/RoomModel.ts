@@ -18,11 +18,23 @@ const RoomSchema = new Schema({
         required: true,
         unique : true
     },
-    spatialSound:{
-        type: String,
-        required: true
-    }
-});
+    entryMode:{
+        type: String
+    },
+    preferencesOverride:{
+        type: Object
+    },
+    AppConfigOverride:{
+        type: Object
+    },
+    features:{
+        type: Object
+    },
+    permission:{
+        type: Object
+    },
 
+});
+//RoomSchema.index({roomSID:1}, {unique: true, name: "RoomIndex"});
 export const roomDB = mongoose.model("Room", RoomSchema);
 export const RoomModel = roomDB;

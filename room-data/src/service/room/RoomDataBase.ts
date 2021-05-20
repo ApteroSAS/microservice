@@ -16,17 +16,26 @@ export default class RoomDataBase {
                 reject("wrong id :" + roomSID);
                 return;
             }
-            //TODO create or update
             let result:any = await roomDB.findOne({roomSID: roomSID}).exec();
             resolve(result);
         });
     }
 
+    findRoomByMongoId(mongoId:any):Promise<RoomDTO>{
+        return new Promise<RoomDTO>(async (resolve, reject) => {
+            if (!mongoId) {
+                reject("wrong id :" + mongoId);
+                return;
+            }
+            let result:any = await roomDB.findOne({_id: mongoId}).exec();
+            resolve(result);
+        });
+    }
 
-    onRoomUpdate(callback: (room) => void) {
+    onRoomUpdate(callback: (room,data) => void) {
         roomDB.watch().on('change', (data:any) =>{
             //console.log(new Date(), data)
-            callback(data.fullDocument);
+            callback(data.fullDocument , data);
         });
     }
 
@@ -37,5 +46,18 @@ export default class RoomDataBase {
             ret.push(document._doc);
         });
         return ret
+    }
+
+    async updateRoom(roomSID: string, data: any) {
+        let room:any = await this.findRoom(roomSID);
+        const query = {'roomSID': roomSID};
+        if(room) {
+            Object.keys(data).forEach(key => {
+                //shallow merge object
+                data[key] = {...room[key], ...data[key]};
+            });
+        }
+        data.roomSID = roomSID;//needs after merge
+        return roomDB.updateOne(query, data, {upsert: true, setDefaultsOnInsert: true});
     }
 }

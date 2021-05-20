@@ -8,7 +8,9 @@ export default class AutoOpenService {
 
     constructor(private pgRoom:PgRoom, private roomDataBase:RoomDataBase,private phoenixController:PhoenixController){
         roomDataBase.onRoomUpdate(room => {
-            this.attachOrDetachObserver(room);
+            if(room && room.roomSID) {
+                this.attachOrDetachObserver(room);
+            }
         });
         roomDataBase.getRooms().then(documents => {
             documents.forEach((room) => {
@@ -22,11 +24,12 @@ export default class AutoOpenService {
         let phxChannel = await this.phoenixController.connectToRoom(hubID);
         this.channels[hubID] = phxChannel;
         let presence = this.phoenixController.getPresence(phxChannel);
-        presence.onSync(() => {
+        presence.onSync(async () => {
             //if 0 the reopen the room
             console.log(hubID+" : people number : "+presence.list(null).length);
             if(presence.list(null).length === 0){
                 this.pgRoom.setEntryMode(hubID,"allow");
+                await phxChannel.push("message", {body: "Room unlocked", type: "chat"});
                 console.log(hubID+" : entry mode set to allow");
             }
         });

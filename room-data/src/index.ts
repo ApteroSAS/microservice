@@ -16,6 +16,7 @@ import {PgRoom} from "@root/postgrest/PgRoom";
 import AutoOpenService from "@root/service/room/AutoOpenService";
 import {JWTAuth} from "@root/jwt/JWTAuth";
 import PhoenixController from "@root/phoenix/PhoenixController";
+import AutoUpdateService from "@root/service/room/AutoUpdateService";
 
 export const BUILD_VERSION = require('../package.json').version;
 console.log(BUILD_VERSION);
@@ -29,16 +30,45 @@ const models = {
 };
 
 // Connect to MongoDB with Mongoose.
-mongoose.connect(
-    db,
-    {
-        useUnifiedTopology: true,
-        useCreateIndex: true,
-        useNewUrlParser: true
-    }
-).then(() => {
-    console.log("MongoDB connected")
-}).catch(err => console.log(err));
+
+let connect = function() {
+    mongoose.connect(
+        db,
+        {
+            useUnifiedTopology: false,
+            useFindAndModify: false,
+            useCreateIndex: true,
+            useNewUrlParser: true,
+            autoReconnect: true,
+            //poolSize: 3,
+            reconnectTries: 10,
+            reconnectInterval: 1000,
+            //socketTimeoutMS: 5000
+        }
+    ).then(() => {
+        console.log("MongoDB connected")
+    }).catch(err => console.log(err));
+};
+connect();
+
+let isConnectedBefore = false;
+mongoose.connection.on('error', function() {
+    console.log('Could not connect to MongoDB');
+});
+
+mongoose.connection.on('disconnected', function(){
+    console.log('Lost MongoDB connection...');
+    if (!isConnectedBefore)
+        connect();
+});
+mongoose.connection.on('connected', function() {
+    isConnectedBefore = true;
+    console.log('Connection established to MongoDB');
+});
+
+mongoose.connection.on('reconnected', function() {
+    console.log('Reconnected to MongoDB');
+});
 
 let expressApp = express(feathers());
 expressApp.use(bodyParser.json());
@@ -64,8 +94,9 @@ expressApp.listen(port, () => {
     let pgRoom = new PgRoom(postgrestController);
 
     let auto: AutoOpenService = new AutoOpenService(pgRoom, db, phoenixController);
+    new AutoUpdateService(pgRoom, db, phoenixController);
 
-    let apiService: RoomApiService = new RoomApiService(db, pgRoom, jwtAuth);
+    let apiService: RoomApiService = new RoomApiService(db, pgRoom, jwtAuth, phoenixController);
     apiService.start(expressApp);
 
     console.log('Listening on ' + port);
