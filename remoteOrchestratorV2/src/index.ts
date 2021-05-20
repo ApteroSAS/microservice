@@ -20,6 +20,7 @@ class App{
     private io: any;
     private docker: any;
     private networkName = "web_renderer_network";
+    private defaultImage = "registry.aptero.co/web-renderer-v2:latest";
     private localhostMode = false;
     private serverSocket: any;
     constructor(){
@@ -76,9 +77,9 @@ class App{
         expressApp.listen(port, () => {
             let router = express.Router();
             router.post('/create', (req, res) => {
-                let data: { localSessionID:string, remoteScreenSessionId: string,screenSizeX:number,screenSizeY:number,startUrl:string } = req.body;
+                let data: { localSessionID:string, remoteScreenSessionId: string,screenSizeX:number,screenSizeY:number,startUrl:string,dockerImage:string } = req.body;
                 try{
-                    this.createOrRetrieveScreen(data.remoteScreenSessionId,data.screenSizeX,data.screenSizeY,data.startUrl).then((resData)=>{
+                    this.createOrRetrieveScreen(data.remoteScreenSessionId,data.screenSizeX,data.screenSizeY,data.startUrl,data.dockerImage || this.defaultImage).then((resData)=>{
                         res.json(resData);
                     }).catch(err =>{
                         console.error(err);
@@ -110,13 +111,13 @@ class App{
         });
     }
 
-    async createOrRetrieveScreen(sessionID,screenSizeX:number,screenSizeY:number,startURL:string){
+    async createOrRetrieveScreen(sessionID,screenSizeX:number,screenSizeY:number,startURL:string,dockerImage:string){
         screenSizeX = screenSizeX || 1024;
         screenSizeY = screenSizeY || 768;
         let port = "8080";
         let containerInfo:any = await this.checkIfExist(sessionID);
         if(!containerInfo) {
-            let cmd = "docker run -d --expose "+port+" -e DISPLAY_WIDTH="+screenSizeX+" -e DISPLAY_HEIGHT="+screenSizeY+" --network="+this.networkName+" --name web-renderer-" + sessionID + " --rm registry.aptero.co/web-renderer-v2:latest";
+            let cmd = "docker run -d --expose "+port+" -e DISPLAY_WIDTH="+screenSizeX+" -e DISPLAY_HEIGHT="+screenSizeY+" --network="+this.networkName+" --name web-renderer-" + sessionID + " --rm "+dockerImage;
             new Promise(() => {
                 //let bashCMD = " /bin/sh "+ "-c "+ "/usr/bin/xvfb-run -a -s \"-screen 0 "+screenSizeX+"x"+screenSizeY+"x24\" node_modules/.bin/electron . "+screenSizeX+" "+screenSizeY;
                 console.log(cmd);
