@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html style="width:100%;height:100%;margin:0">
+    <head>
+    	<meta http-equiv="Access-Control-Allow-Origin" content="null">
+        <title>Aptero Compatibility mode</title>
+    </head>
+    <body style="width:100%;height:100%;margin:0">
+
+        <!-- Import the AppStream Embed Interface JS -->
+        <script type="text/javascript" src="../lib/js/appstream_embed.js"> </script>
+        <script type="text/javascript" src="../lib/js/axios.min.js"> </script>
+
+        <!-- Create an empty div for the iframe to be injected -->
+        <div id="appstream-container" style="visibility:hidden; width: 100%; height: 100%; margin:auto; min-width: 100%; min-height:100%;"> </div>
+
+        <!-- Custom code -->
+        <script type="text/javascript">
+
+            var appstreamEmbed;
+
+            function getRandomInt(min, max) {
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+            }
+
+            async function launchAppStreamSession() {
+                //window.frames.document.getElementById("toolbar").children[0].children[0].children[2].children[1].children[0].children[0].click()
+
+                destroyAppStreamFrame();
+
+                //document.getElementById("appstream-container").style.visibility = 'hidden'; //hide while loading if there is an app ID
+                document.getElementById("appstream-container").style.visibility = 'visible';
+                let url = new URL(window.location.href);
+                let params = url.searchParams;
+                if(!params.get('q') && !params.get('c')){
+                    console.error("invalid parameters");
+                    return;
+                }
+                let streamingURL = "https://www.aptero.co";
+                if(params.get('q')) {
+                    let streamingURLBase64 = params.get('q');
+                    if (!streamingURLBase64) {
+                        console.error("enter streaming url in base 64 in the 'q' parameter of the query")
+                        return;
+                    }
+                    urlToProxy = atob(streamingURLBase64);
+                    let tutoURL = "https://meet.aptero.co/service/remote/orchestrator/static/tuto/tutoRedirect.html?url="+urlToProxy;
+                    if(!params.get('u')){
+                        params.set('u', "default-user-"+((getRandomInt(1,100000)+"").padStart(7,"0")));
+                        window.location.href = url.toString();//reload url with new user before starting the session
+                    }
+                    let user = params.get('u');
+                    let resp = await axios.post("https://" + "meet.aptero.co" + "/service/remote/orchestrator/getStreamApp", {
+                        "userId":user,
+                        "sessionContext":tutoURL
+                    });
+                    resp=resp.data;
+                    streamingURLBase64 = resp.StreamingURLBase64;
+                    streamingURL = atob(streamingURLBase64);
+                }
+                const hiddenItems = getHiddenElements();
+                var userInterfaceConfig = {};
+                userInterfaceConfig[AppStream.Embed.Options.HIDDEN_ELEMENTS] = hiddenItems;
+
+                if (streamingURL && streamingURL.length > 0) {
+                    var appstreamOptions = {
+                        sessionURL: streamingURL,
+                        userInterfaceConfig: userInterfaceConfig
+                    };
+                    if(params.get('c')){
+                        let appParams = params.get('c');
+                        appstreamOptions = JSON.parse(atob(appParams));
+                    }
+                    console.log(appstreamOptions);
+                    appstreamEmbed = new AppStream.Embed("appstream-container", appstreamOptions);
+                    appstreamEmbed.addEventListener(AppStream.Embed.Events.SESSION_STATE_CHANGE, updateSessionStateCallback);
+                    appstreamEmbed.addEventListener(AppStream.Embed.Events.SESSION_INTERFACE_STATE_CHANGE, updateUserInterfaceStateCallback);
+                    appstreamEmbed.addEventListener(AppStream.Embed.Events.SESSION_ERROR, errorCallback);
+                    window.appstreamEmbed = appstreamEmbed;//publish on global scope
+
+                } else {
+                    alert("Invalid URL");
+                }
+            }
+
+            function destroyAppStreamFrame() {
+                if (appstreamEmbed) {
+                    appstreamEmbed.destroy();
+                    appstreamEmbed = null;
+                    window.appstreamEmbed = null;
+                    delete appstreamEmbed;
+                }
+            }
+
+            function updateSessionStateCallback(event) {
+                let status = event[AppStream.Embed.EventParams.STATUS];
+                switch(AppStream.Embed.SessionStatus[status]) {
+                    case AppStream.Embed.SessionStatus.Unknown:
+                        break;
+                    case AppStream.Embed.SessionStatus.Started:
+                        document.getElementById("appstream-container").style.visibility = 'visible';
+                        break;
+                    default:
+                        break;
+                }
+                console.log("embed-sample.html listened to updateSessionState event: " + JSON.stringify(event));
+            }
+
+            function updateUserInterfaceStateCallback(event) {
+                console.log("embed-sample.html listened to updateUserInterfaceState event: " + JSON.stringify(event));
+            }
+
+            function errorCallback(event) {
+                console.log("embed-sample.html listened to appstreamEmbedError event: " + JSON.stringify(event));
+            }
+
+            function getHiddenElements() {
+                //https://docs.aws.amazon.com/appstream2/latest/developerguide/embed-streaming-sessions.html#initialize-configure-embed-interface-object
+                var hiddenItems = [];
+                //hiddenItems.push(AppStream.Embed.Elements.TOOLBAR);
+                hiddenItems.push(AppStream.Embed.Elements.CATALOG_BUTTON);
+                hiddenItems.push(AppStream.Embed.Elements.WINDOW_SWITCHER_BUTTON);
+                hiddenItems.push(AppStream.Embed.Elements.FILES_BUTTON);
+                hiddenItems.push(AppStream.Embed.Elements.CLIPBOARD_BUTTON);
+                hiddenItems.push(AppStream.Embed.Elements.COPY_LOCAL_BUTTON);
+                hiddenItems.push(AppStream.Embed.Elements.PASTE_REMOTE_BUTTON);
+                //hiddenItems.push(AppStream.Embed.Elements.SETTINGS_BUTTON);
+                //hiddenItems.push(AppStream.Embed.Elements.ENABLE_MICROPHONE_BUTTON);
+                hiddenItems.push(AppStream.Embed.Elements.STREAMING_MODE_BUTTON);
+                hiddenItems.push(AppStream.Embed.Elements.SCREEN_RESOLUTION_BUTTON);
+                hiddenItems.push(AppStream.Embed.Elements.REGIONAL_SETTINGS_BUTTON);
+                hiddenItems.push(AppStream.Embed.Elements.FULLSCREEN_BUTTON);
+                hiddenItems.push(AppStream.Embed.Elements.END_SESSION_BUTTON);
+                hiddenItems.push("adminCommandsButton");
+                hiddenItems.push("softKeyboardButton");
+                hiddenItems.push("keyboardShortcutsButton");
+
+                return hiddenItems;
+            }
+
+            function sendKeyboardEvent(event) {
+                appstreamEmbed.sendKeyboardEvent(event);
+            }
+
+            launchAppStreamSession();//autostart
+        </script>
+
+    </body>
+</html>

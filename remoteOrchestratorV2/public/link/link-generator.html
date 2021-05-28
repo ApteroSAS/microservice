@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html style="width:100%;height:100%;margin:0">
+    <head>
+    	<meta http-equiv="Access-Control-Allow-Origin" content="null">
+        <title>Aptero Compatibility mode</title>
+    </head>
+    <body style="width:100%;height:100%;margin:0">
+
+        <!-- Import the AppStream Embed Interface JS -->
+        <script type="text/javascript" src="../lib/js/appstream_embed.js"> </script>
+        <script type="text/javascript" src="../lib/js/axios.min.js"> </script>
+
+        <div>
+            VM start url: <br />
+            <input placeholder="Enter link" name="name"/> <br/>
+            <br/>
+            <br/>
+            Generated unique link: <br />
+            <p id="log"></p>
+            <br/>
+            <br/>
+            <br/>
+        </div>
+        <p>
+            <u>Known limitation of the link:</u> <br/>
+            Link does not work in private navigation <br/>
+            <!--Link is unique (you cannot click it twice) <br/>-->
+            <!--Link has a timeout <br/>-->
+            You cannot select the audio source of the mic <br/>
+        </p>
+
+        <!-- Custom code -->
+        <script type="text/javascript">
+            const input = document.querySelector('input');
+            const log = document.getElementById('log');
+
+            input.addEventListener('change', updateValue);
+
+            function getRandomInt(min, max) {
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+            }
+
+            function updateValue(e) {
+                urlToProxy = e.target.value || "meet.aptero.co/link";
+                let theURL= new URL('https://meet.aptero.co/service/remote/orchestrator/static/app/embed-app-v2.html');
+                theURL.searchParams.set("q",btoa(urlToProxy));
+                //theURL.searchParams.set("u","standalone-user-"+((getRandomInt(1,100000)+"").padStart(7,"0")));
+                log.textContent = theURL.toString();
+            }
+        </script>
+
+    </body>
+</html>

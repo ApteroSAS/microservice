@@ -37,7 +37,7 @@ RUN npm i
 ##################
 COPY ./src ./src
 RUN npm run build
-COPY ./public/* ./public/
+COPY ./public/ ./public/
 
 ##################
 ##ngingx conf
