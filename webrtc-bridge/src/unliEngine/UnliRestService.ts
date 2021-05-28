@@ -1,6 +1,4 @@
-import {JWTAuth} from "@root/jwt/JWTAuth";
-import WebRTCBridge from "@root/webrtc/WebRTCBridge";
-import UnliEngine from "@root/unliEngine/UnliEngine";
+import UnliEngineRoomManager from "@root/unliEngine/UnliEngineRoomManager";
 
 const express = require('express');
 export const BUILD_VERSION = require('../../package.json').version;
@@ -8,7 +6,7 @@ export const BUILD_VERSION = require('../../package.json').version;
 export default class UnliRestService {
     public expressApp;
 
-    constructor(public unliEngine:UnliEngine) {
+    constructor(public unliEngine:UnliEngineRoomManager) {
     }
 
     mountAPI() {
@@ -18,9 +16,18 @@ export default class UnliRestService {
             res.json(BUILD_VERSION);
         });
 
+        router.post('/createFake', (req, res) => {
+            let json = req.body;
+            try {
+                res.json(this.unliEngine.getRoom(json.room).generateFake(json.boxSz,json.center,json.numSpheres));
+            }catch (e) {
+                res.status(500).json(e);
+            }
+        });
+
         router.get('/clients', (req, res) => {
             try {
-                res.json(this.unliEngine.getClients());
+                res.json(this.unliEngine.getRoom("default").getClients());
             }catch (e) {
                 res.status(500).json(e);
             }
