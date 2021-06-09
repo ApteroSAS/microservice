@@ -2,12 +2,15 @@ import RoomDataBase from "@root/service/room/RoomDataBase";
 import {PgRoom} from "@root/postgrest/PgRoom";
 import {JWTAuth} from "@root/jwt/JWTAuth";
 import PhoenixController from "@root/phoenix/PhoenixController";
+import AdapterProfileService from "@root/service/room/AdapterProfileService";
+import {properties} from "@root/properties/properties";
 
 const express = require('express');
 
 export default class RoomApiService {
     public expressApp;
     public feathersApp: any = null;
+    adapterService = new AdapterProfileService();
 
     constructor(public roomDB: RoomDataBase, private pgRoom: PgRoom, private jwt: JWTAuth, private phoenixController: PhoenixController) {
     }
@@ -30,6 +33,20 @@ export default class RoomApiService {
             });
         });
 
+        router.post('/room/jwt/helper/mongo', async (req, res) => {
+            let json = req.body;
+            let data = json.data;
+            let sid = json.hubsid;
+            let jwt = json.jwt;
+            let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "ret"});
+            if(payload.sub == properties.ADMIN_USER){
+                let ret = await this.jwt.createMongoJWT(sid,data);
+                res.json(ret);
+            }else{
+                res.status(500).json("USER NOT ADMIN");
+            }
+        });
+
         router.post('/room/update/mongo', async (req, res) => {
             let json = req.body;
             let jwt = json.jwt;
@@ -45,8 +62,8 @@ export default class RoomApiService {
               "data":{"entry_mode":"invite"}
             }
              */
-            let payload:any = await this.jwt.verifyAndDecode(jwt,{issuer:"aptero"});
-            this.roomDB.updateRoom(payload.hubSID,payload.data).then((room) => {
+            let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "aptero"});
+            this.roomDB.updateRoom(payload.hubSID, payload.data).then((room) => {
                 res.json(room);
             }).catch((err) => {
                 res.status(500).json(err);
@@ -68,8 +85,8 @@ export default class RoomApiService {
               "data":{"entry_mode":"invite"}
             }
              */
-            let payload:any = await this.jwt.verifyAndDecode(jwt,{issuer:"aptero"});
-            this.pgRoom.updateRoom(payload.hubSID,payload.data).then((room) => {
+            let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "aptero"});
+            this.pgRoom.updateRoom(payload.hubSID, payload.data).then((room) => {
                 this.processPgRoomUpdate(payload);
                 res.json(room);
             }).catch((err) => {
@@ -86,18 +103,27 @@ export default class RoomApiService {
             });
         });
 
+        router.get('/adapter/:sid/profile', (req, res) => {
+            let aid = req.params.sid;
+            try {
+                res.json(this.adapterService.getProfiles()[aid]);
+            } catch (err) {
+                res.status(500).json(err);
+            }
+        });
+
         this.expressApp.use('/', router);
     }
 
-    async processPgRoomUpdate(payload){
-        if(!payload && !payload.hubSID){
+    async processPgRoomUpdate(payload) {
+        if (!payload && !payload.hubSID) {
             return;
         }
-        if(payload.data.entry_mode === "invite"){
-            await this.phoenixController.sendMessageToRoomStandalone(payload.hubSID,"Room Locked")
+        if (payload.data.entry_mode === "invite") {
+            await this.phoenixController.sendMessageToRoomStandalone(payload.hubSID, "Room Locked")
         }
-        if(payload.data.entry_mode === "allow"){
-            await this.phoenixController.sendMessageToRoomStandalone(payload.hubSID,"Room Unlocked")
+        if (payload.data.entry_mode === "allow") {
+            await this.phoenixController.sendMessageToRoomStandalone(payload.hubSID, "Room Unlocked")
         }
     }
 

@@ -50,6 +50,16 @@ export class JWTAuth {
         return jwt;
     }
 
+    async createMongoJWT(hubsid,data): Promise<String> {
+        let privateKey = await this.getSecret();
+        const jwt = await new SignJWT({
+            "iss":"aptero",
+            "hubSID":hubsid,
+            "data":data
+        }).setProtectedHeader({alg: this.alg, typ: "JWT"}).sign(privateKey);
+        return jwt;
+    }
+
     async verifyAndDecode(jwt: string,claimVerification:JWTVerifyOptions) {
         let publicKey = await this.getSecret();
         const { payload, protectedHeader } = await jwtVerify(jwt, publicKey, claimVerification);
