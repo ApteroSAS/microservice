@@ -9,6 +9,7 @@ export default class AdapterProfileService {
 
     getProfiles() {
         let profiles = {};
+        //generic
         profiles["dialog-io"] = {
             adapter: "dialog-io",
             transport: "WebSocketIOTransport",
@@ -20,6 +21,7 @@ export default class AdapterProfileService {
         profiles["janus"] = {
             adapter: "janus"
         };
+        //meet
         profiles["twilio"] = {
             adapter: "twilio",
             transport: "WebSocketIOTransport",
@@ -30,6 +32,7 @@ export default class AdapterProfileService {
             transport: "WebSocketIOTransport",
             url: "https://meet.aptero.co/service/agora"
         };
+        //alpha
         profiles["alpha-twilio"] = {
             adapter: "twilio",
             transport: "WebSocketIOTransport",

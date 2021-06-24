@@ -19,6 +19,7 @@ import PhoenixController from "@root/phoenix/PhoenixController";
 import AutoUpdateService from "@root/service/room/AutoUpdateService";
 
 export const BUILD_VERSION = require('../package.json').version;
+console.log(new Date().toISOString());
 console.log(BUILD_VERSION);
 
 /////////
