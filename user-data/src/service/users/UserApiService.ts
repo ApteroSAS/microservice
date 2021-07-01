@@ -19,6 +19,16 @@ export default class UserApiService {
             res.json(apiVersion);
         });
 
+        router.get('/get/user/:email/id', (req, res) => {
+            let email = req.params.email;
+            this.userdb.findUserDataByMail(email).then((user) => {
+                res.json(user.userId);
+            }).catch((err) => {
+                console.error(err);
+                res.status(500).json(err);
+            });
+        });
+
         router.post('/update/user', (req, res) => {
             let json = req.body;
             console.log("URL received '/update/user'",json);

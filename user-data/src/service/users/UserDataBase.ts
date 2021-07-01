@@ -30,10 +30,24 @@ export default class UserDataBase {
         });
     }
 
+    findUserDataByMail(mail):Promise<any>{
+        return new Promise<String>((resolve, reject) => {
+            userDB.find({ email: mail}).then((user:any[])=>{
+                if(user.length===1) {
+                    resolve(user[0]);
+                }else{
+                    reject("invalid array size");
+                }
+            }).catch(err => {
+                reject(err);
+            });
+        });
+    }
+
     findUserByMail(mail):Promise<String>{
         return new Promise<String>((resolve, reject) => {
             userDB.find({ email: mail}).then((user:any)=>{
-                resolve(user.accountId);
+                resolve(user.accountId);//TODO iq this realy working????
             }).catch(err => {
                 reject(err);
             });
