@@ -17,6 +17,7 @@ import AutoOpenService from "@root/service/room/AutoOpenService";
 import {JWTAuth} from "@root/jwt/JWTAuth";
 import PhoenixController from "@root/phoenix/PhoenixController";
 import AutoUpdateService from "@root/service/room/AutoUpdateService";
+import {PgRoleMenmbership} from "@root/postgrest/PgRoleMenmbership";
 
 export const BUILD_VERSION = require('../package.json').version;
 console.log(new Date().toISOString());
@@ -58,6 +59,7 @@ mongoose.connection.on('error', function() {
 });
 
 mongoose.connection.on('disconnected', function(){
+    process.exit(1);//in a container this will be restarted automaticaly
     console.log('Lost MongoDB connection...');
     if (!isConnectedBefore)
         connect();
@@ -93,11 +95,12 @@ expressApp.listen(port, () => {
     let phoenixController = new PhoenixController(jwtAuth, properties.ADMIN_USER, "6f016efef5a501bd");
     let postgrestController: PostgrestController = new PostgrestController(jwtAuth, properties.POSTGREST_HOST);
     let pgRoom = new PgRoom(postgrestController);
+    let pgRoleMenmbership = new PgRoleMenmbership(postgrestController);
 
     let auto: AutoOpenService = new AutoOpenService(pgRoom, db, phoenixController);
     new AutoUpdateService(pgRoom, db, phoenixController);
 
-    let apiService: RoomApiService = new RoomApiService(db, pgRoom, jwtAuth, phoenixController);
+    let apiService: RoomApiService = new RoomApiService(db, pgRoom,pgRoleMenmbership, jwtAuth, phoenixController);
     apiService.start(expressApp);
 
     console.log('Listening on ' + port);

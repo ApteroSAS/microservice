@@ -4,6 +4,7 @@ import {JWTAuth} from "@root/jwt/JWTAuth";
 import PhoenixController from "@root/phoenix/PhoenixController";
 import AdapterProfileService from "@root/service/room/AdapterProfileService";
 import {properties} from "@root/properties/properties";
+import {PgRoleMenmbership} from "@root/postgrest/PgRoleMenmbership";
 
 const express = require('express');
 
@@ -12,7 +13,7 @@ export default class RoomApiService {
     public feathersApp: any = null;
     adapterService = new AdapterProfileService();
 
-    constructor(public roomDB: RoomDataBase, private pgRoom: PgRoom, private jwt: JWTAuth, private phoenixController: PhoenixController) {
+    constructor(public roomDB: RoomDataBase, private pgRoom: PgRoom,private pgRoleMenmbership:PgRoleMenmbership, private jwt: JWTAuth, private phoenixController: PhoenixController) {
     }
 
     mountAPI() {
@@ -89,6 +90,35 @@ export default class RoomApiService {
             this.pgRoom.updateRoom(payload.hubSID, payload.data).then((room) => {
                 this.processPgRoomUpdate(payload);
                 res.json(room);
+            }).catch((err) => {
+                res.status(500).json(err);
+            });
+        });
+
+        router.post('/room/admin/', async (req, res) => {
+            let roomSID = req.params.sid;
+            let json = req.body;
+            let jwt = json.jwt;
+            //https://jwt.io/
+            /*
+            header {
+              "alg": "HS512",
+              "typ": "JWT"
+            }
+            payload:{
+              "iss":"aptero",
+              "hubSID":"vGgHMPT",
+              "account_id":"toto@aptero.co",
+              "enable":true
+            }
+             */
+            let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "aptero"});
+            let account_id = payload.account_id;
+            let hubSID = payload.hubSID;
+            const dbId = await this.pgRoom.getDBId(hubSID);
+            let enable = payload.enable;
+            this.pgRoleMenmbership.updateRoom(dbId,account_id,enable).then((result) => {
+                res.json(result);
             }).catch((err) => {
                 res.status(500).json(err);
             });

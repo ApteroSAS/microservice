@@ -10,16 +10,21 @@ export class PgRoom {
     }
 
     async updateRoom(hubSID: string ,data:any) {
+        const hub_id = await this.getDBId(hubSID);
+        await this.postgrestController.update("hubs", "hub_id=eq." + hub_id, data)
+        return {
+            hubSID,
+            data
+        }
+    }
+
+    async getDBId(hubSID: string):Promise<string> {
         let hubList = await this.postgrestController.find("hubs", "select=*,hub_id::text&hub_sid=eq." + hubSID);
         if (hubList.length != 1) {
-            console.error(hubList);
+            throw new Error();
         }else {
             let hub = hubList[0];
-            await this.postgrestController.update("hubs", "hub_id=eq." + hub.hub_id, data)
-            return {
-                hubSID,
-                data
-            }
+            return hub.hub_id;
         }
     }
 }
