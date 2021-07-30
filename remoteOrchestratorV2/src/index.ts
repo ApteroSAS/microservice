@@ -1,5 +1,6 @@
 const {exec} = require("child_process");
 const Docker = require('dockerode');
+import {WebServer} from "@root/service/WebServer";
 
 import 'module-alias/register';
 const express = require('express')
@@ -91,6 +92,7 @@ class App{
                 }
             });
             expressApp.use('/', router);
+            new WebServer(expressApp);
             console.log('Listening on '+port);
         });
     }
