@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title> Aptero | Micro VM </title>
+  <!--JQuery-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.js"
+          integrity="sha512-n/4gHW3atM3QqRcbCn6ewmpxcLAHGaDjpEBu4xZd47N0W2oQ+6q7oc3PXstrJYXcbNU1OHdQ1T7pAP+gi5Yu8g=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.js"></script>
+
+  <!--BOOSTRAP-->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+        integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+
+  <!--FONT AWESOME-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+
+
+</head>
+
+<body>
+<script>
+  const paramHost = new URL(window.location.href).searchParams.get("host");
+  window.service = {
+    host: paramHost || "meet.aptero.co"
+  }
+
+  function generateNewFrame(sessionID, width, height, startUrl) {
+    return "web-browser:" + btoa(JSON.stringify({
+      sessionID: sessionID,
+      startUrl: startUrl,
+      width: width,
+      height: height
+    })) + "/web-browser.mp4";
+  }
+
+  function display() {
+    const sessionid = document.getElementById("sessionid").value;
+    const width = document.getElementById("width").value;
+    const height = document.getElementById("height").value;
+    const type = document.getElementById("type").value;
+    document.getElementById("result").value = generateNewFrame(sessionid, width, height, type);
+  }
+
+  function makeid(length) {
+    var result = "";
+    var characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  }
+
+  $("document").ready(function() {
+    document.getElementById("sessionid").value = document.getElementById("sessionid").value + "-" + makeid(5);
+  });
+</script>
+INTERNAL USE ONLY
+<h1>Create Micro VM</h1>
+<form id="form1" action="#">
+
+  Sessionid (put your name instead of public - new name equal new VM): <input id="sessionid" type="text" value="public" /><br>
+  Width: <input id="width" type="text" value="1024" /><br>
+  Height: <input id="height" type="text" value="768" /><br>
+  Type (not used): <input id="type" type="text" value="linux" /><br>
+  Link: <input id="result" type="text" style="width:100%" /><br>
+  <input type="button" value="Genrate New VM Link" onclick="display()">
+</form>
+
+<h1>View ROOM VM</h1>
+WIP not functional
+ROOM SID: <input id="room_sid" type="text" value="" /><br>
+<input type="button" value="Display" onclick="display()">
+
+<h1>Display VM</h1>
+<script>
+  function generateNoVNCLink(vmUrl) {
+    vmUrl = vmUrl.replace("wss", "https"); //replace first
+    vmUrl = new URL(vmUrl);
+    const host = vmUrl.host;
+    const port = vmUrl.port === "" ? 443 : vmUrl.port;
+    const path = vmUrl.pathname.replace("/", ""); //remove first slash
+    //const novncURL = new URL("https://"+window.service.host+"/service/remote/orchestrator/static/manage/vnc/vnc_lite.html")
+    const novncURL = new URL("https://novnc.com/noVNC/vnc_lite.html");
+    novncURL.searchParams.set("host", host);
+    novncURL.searchParams.set("port", port);
+    novncURL.searchParams.set("path", path);
+    novncURL.searchParams.set("scale", true);
+    //https://novnc.com/noVNC/vnc_lite.html?host=meet.aptero.co&port=443&path=reverse/172.20.0.7/8080/websockify&scale=true
+    return novncURL.toString();
+  }
+
+  const IN_APP_WEB_BROWSER_PROTOCOL = "web-browser:";
+  const IN_APP_WEB_BROWSER_TRAIL = "/web-browser.mp4";
+
+  async function getNoVNCLink(screenSRC) {
+  	return new Promise((resolve,reject) => {
+			screenSRC = screenSRC.replace(IN_APP_WEB_BROWSER_PROTOCOL, "");
+			screenSRC = screenSRC.replace(IN_APP_WEB_BROWSER_TRAIL, "");
+			let metaData = JSON.parse(atob(screenSRC));
+			axios.post("https://"+window.service.host+"/service/remote/orchestrator/create", {
+        localSessionID: "none",
+        remoteScreenSessionId: metaData.sessionID,
+        screenSizeX:metaData.width,
+        screenSizeY:metaData.height,
+        startUrl:metaData.startUrl
+      }).then(async resp => {
+				resp = resp.data;
+				const url = "wss://"+window.service.host+"/reverse/" + resp.ip + "/" + resp.port + "/websockify";
+				resolve(url);
+			}).catch(err => {
+				reject(err);
+			});
+		});
+  }
+  //wss://meet.aptero.co/reverse/172.20.0.7/8080/websockify
+  async function generateLink(){
+		let screenSRC = document.getElementById("vm_url").value
+		let vmUrl = await getNoVNCLink(screenSRC);
+		let vmVNCLink = generateNoVNCLink(vmUrl);
+		const atag = document.getElementById("vm_vnc_link");
+		atag.style.visibility = "visible";
+		atag.href = vmVNCLink;
+	}
+</script>
+
+VM Url: <input id="vm_url" type="text" style="width:100%"
+               placeholder="web-browser:eyJzZXNzaW9uSUQiOiJwdWJsaWMtZ25wUnciLCJzdGFydFVybCI6ImxpbnV4Iiwid2lkdGgiOiIxMDI0IiwiaGVpZ2h0IjoiNzY4In0=/web-browser.mp4" /><br>
+<input type="button" value="Generate Link" onclick="generateLink()"></br>
+<a id="vm_vnc_link" href="#" style="visibility:hidden">Click to connect to VM</a></br>
+To access browser => Right CLick => Application => Shells => Bash => nohup firefox &
+
+</body>
+</html>
