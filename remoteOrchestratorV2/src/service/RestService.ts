@@ -9,8 +9,9 @@ const express = require('express')
 export class RestService {
     private noVNCdocker: NoVNCdocker;
     private awsAppStream: AWSAppStream;
+    private defaultImage = "registry.aptero.co/web-renderer-v2:latest";
 
-    constructor(private expressApp) {
+    constructor(private expressApp,private buildVersion) {
         this.noVNCdocker = new NoVNCdocker();
         this.awsAppStream = new AWSAppStream();
         this.setupApi();
@@ -23,10 +24,16 @@ export class RestService {
         this.expressApp.use(bodyParser.urlencoded({extended: true}));
 
         let router = express.Router();
+
+        let apiVersion = "1.0.0";//increment this each time you change the api and break the backward compatibility (semver)
+        router.get('/api/version', (req, res) => {
+            res.json({apiVersion:apiVersion,buildVersion:this.buildVersion});
+        });
+
         router.post('/create', (req, res) => {
-            let data: { localSessionID: string, remoteScreenSessionId: string, screenSizeX: number, screenSizeY: number, startUrl: string } = req.body;
+            let data: { localSessionID: string, remoteScreenSessionId: string, screenSizeX: number, screenSizeY: number, startUrl: string,dockerImage:string } = req.body;
             try {
-                this.noVNCdocker.createOrRetrieveScreen(data.remoteScreenSessionId, data.screenSizeX, data.screenSizeY, data.startUrl).then((resData) => {
+                this.noVNCdocker.createOrRetrieveScreen(data.remoteScreenSessionId, data.screenSizeX, data.screenSizeY, data.startUrl,data.dockerImage || this.defaultImage).then((resData) => {
                     res.json(resData);
                 }).catch(err => {
                     console.error(err);
@@ -37,6 +44,49 @@ export class RestService {
                 res.status(500).json(err);
             }
         });
+
+        router.get('/heart/beat/:sid', (req, res) => {
+            const sid = req.params.sid;
+            try {
+                this.noVNCdocker.hearBeat(sid);
+                res.json("OK");
+            } catch (err) {
+                console.error(err);
+                res.status(500).json(err);
+            }
+        });
+
+        router.get('/vm/pause/:sid', (req, res) => {
+            const sid = req.params.sid;
+            try {
+                this.noVNCdocker.pause(sid).then((resData) => {
+                    res.json(resData);
+                }).catch(err => {
+                    console.error(err);
+                    res.status(500).json(err);
+                })
+            } catch (err) {
+                console.error(err);
+                res.status(500).json(err);
+            }
+        });
+
+        //TODO auth with jwt maybe
+        router.get('/vm/resume/:sid', (req, res) => {
+            const sid = req.params.sid;
+            try {
+                this.noVNCdocker.resume(sid).then((resData) => {
+                    res.json(resData);
+                }).catch(err => {
+                    console.error(err);
+                    res.status(500).json(err);
+                })
+            } catch (err) {
+                console.error(err);
+                res.status(500).json(err);
+            }
+        });
+
         router.post('/getStreamApp', (req, res) => {
             //--stack-name FallBackStack --fleet-name FallBackFleet --user-id username --application-id chrome-context --session-context \"meet.aptero.co\
             let data: { stackName: string, fleetName: string, userId: string, applicationId: string, sessionContext: string } = req.body;

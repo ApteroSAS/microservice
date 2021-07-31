@@ -4,9 +4,23 @@ const Docker = require('dockerode');
 export class NoVNCdocker{
     private docker: any;
     private networkName = "web_renderer_network";
+    lastHeartBeat = {};
+    hearBeatDeadTimeMs = 10*60*1000;
 
     constructor(){
         this.setupDocker();
+    }
+
+    heartBeatCheckerInit(){
+        const xMs = this.hearBeatDeadTimeMs;//ms => 10min
+        setInterval(()=>{
+            Object.keys(this.lastHeartBeat).forEach(key => {
+                //if the heart beat is older than X we pause the container
+                if(this.lastHeartBeat[key] && this.lastHeartBeat[key].getTime() < (new Date().getTime()-xMs)){
+                    this.pause(key);
+                }
+            });
+        },Math.floor(xMs/10));
     }
 
     setupDocker(){
@@ -62,24 +76,27 @@ export class NoVNCdocker{
         });
     }
 
-    async createOrRetrieveScreen(sessionID,screenSizeX:number,screenSizeY:number,startURL:string){
+    async createOrRetrieveScreen(sessionID,screenSizeX:number,screenSizeY:number,startURL:string,dockerImage:string){
         screenSizeX = screenSizeX || 1024;
         screenSizeY = screenSizeY || 768;
         let port = "8080";
         let containerInfo:any = await this.checkIfExist(sessionID);
         if(!containerInfo) {
-            let cmd = "docker run -d --expose "+port+" -e DISPLAY_WIDTH="+screenSizeX+" -e DISPLAY_HEIGHT="+screenSizeY+" --network="+this.networkName+" --name web-renderer-" + sessionID + " --rm registry.aptero.co/web-renderer-v2:latest";
-            new Promise(() => {
-                //let bashCMD = " /bin/sh "+ "-c "+ "/usr/bin/xvfb-run -a -s \"-screen 0 "+screenSizeX+"x"+screenSizeY+"x24\" node_modules/.bin/electron . "+screenSizeX+" "+screenSizeY;
-                console.log(cmd);
-                exec(cmd);
-            });
+            let cmd = "docker run -d -l \"com.docker.compose.project=web-renderer\" --expose "+port+" -e DISPLAY_WIDTH="+screenSizeX+" -e DISPLAY_HEIGHT="+screenSizeY+" --network="+this.networkName+" --name web-renderer-" + sessionID + " --rm "+dockerImage;
+            //docker run -d -l "com.docker.compose.project=web-renderer" --expose 8080 -e DISPLAY_WIDTH=1024 -e DISPLAY_HEIGHT=768 --network=web_renderer_network --name web-renderer-local-test --rm registry.aptero.co/web-renderer-v2:latest
+            this.execDockerCommand(cmd);
         }
         while (!containerInfo) {
             await new Promise(resolve => {
                 setTimeout(resolve,300);
             });
             containerInfo = await this.checkIfExist(sessionID);
+        }
+        try {
+            await this.resume(sessionID);//revive container on heart beat /* may fail if containert already started etv...*/
+            await this.hearBeat(sessionID);//initial heart beat
+        }catch (e) {
+            /* do nothing */
         }
         let ip = containerInfo.NetworkSettings.Networks[this.networkName].IPAddress;
         return {
@@ -88,4 +105,46 @@ export class NoVNCdocker{
         };
     }
 
+    convertSid(sid:string){
+        if(sid.startsWith("web-renderer-")){
+            return sid;
+        }else{
+            return "web-renderer-"+sid;
+        }
+    }
+
+    hearBeat(sid: string) {
+        sid = this.convertSid(sid);
+        console.log("heart beat :"+sid);
+        if(this.lastHeartBeat[sid] && this.lastHeartBeat[sid].getTime() < (new Date().getTime()-this.hearBeatDeadTimeMs)){
+            this.resume(sid);//revive container on heart beat
+        }
+        this.lastHeartBeat[sid]=new Date();
+
+    }
+
+    async execDockerCommand(cmd:string):Promise<any>{
+        return new Promise((resolve,reject) => {
+            console.log(cmd);
+            exec(cmd, (error, stdout, stderr) => {
+                if (error) {
+                    reject({error, stdout, stderr});
+                }else{
+                    resolve("done");
+                }
+            });
+        });
+    }
+
+    async pause(sid: string):Promise<any> {
+        sid = this.convertSid(sid);
+        let cmd = "docker pause "+sid;
+        return await this.execDockerCommand(cmd);
+    }
+
+    async resume(sid: string):Promise<any> {
+        sid = this.convertSid(sid);
+        let cmd = "docker unpause "+sid;
+        return await this.execDockerCommand(cmd);
+    }
 }
