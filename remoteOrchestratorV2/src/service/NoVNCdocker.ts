@@ -9,6 +9,7 @@ export class NoVNCdocker{
 
     constructor(){
         this.setupDocker();
+        this.heartBeatCheckerInit();
     }
 
     heartBeatCheckerInit(){
