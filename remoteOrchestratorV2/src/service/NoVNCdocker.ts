@@ -4,6 +4,7 @@ const Docker = require('dockerode');
 export class NoVNCdocker{
     private docker: any;
     private networkName = "web_renderer_network";
+    private prefix = "web-renderer-";
     lastHeartBeat = {};
     hearBeatDeadTimeMs = 10*60*1000;
 
@@ -13,14 +14,29 @@ export class NoVNCdocker{
     }
 
     heartBeatCheckerInit(){
-        const xMs = this.hearBeatDeadTimeMs;//ms => 10min
-        setInterval(()=>{
-            Object.keys(this.lastHeartBeat).forEach(key => {
-                //if the heart beat is older than X we pause the container
-                if(this.lastHeartBeat[key] && this.lastHeartBeat[key].getTime() < (new Date().getTime()-xMs)){
-                    this.pause(key);
+        this.docker.listContainers((err, containers) => {
+            containers.forEach((containerInfo) => {
+                if(containerInfo.Names && containerInfo.Names.length===1) {
+                    let name:string = containerInfo.Names[0];
+                    if(name.startsWith("/"+this.prefix)){
+                        //reset all heart beat at restart but do not resume old VM
+                        this.lastHeartBeat[name.replace("/","")]=new Date();
+                    }
                 }
             });
+        });
+        const xMs = this.hearBeatDeadTimeMs;//ms => 10min
+        setInterval(()=>{
+            try {
+                Object.keys(this.lastHeartBeat).forEach(key => {
+                    //if the heart beat is older than X we pause the container
+                    if(this.lastHeartBeat[key] && this.lastHeartBeat[key].getTime() < (new Date().getTime()-xMs)){
+                        this.pause(key);
+                    }
+                });
+            }catch (e) {
+                console.warn(e);
+            }
         },Math.floor(xMs/10));
     }
 
@@ -67,7 +83,7 @@ export class NoVNCdocker{
                 containers.forEach((containerInfo) => {
                     if(containerInfo.Names && containerInfo.Names.length===1) {
                         let name:string = containerInfo.Names[0];
-                        if(name.startsWith("/web-renderer-") && name.endsWith(sessionID)){
+                        if(name.startsWith("/"+this.prefix) && name.endsWith(sessionID)){
                             resolve(containerInfo);
                         }
                     }
@@ -83,7 +99,7 @@ export class NoVNCdocker{
         let port = "8080";
         let containerInfo:any = await this.checkIfExist(sessionID);
         if(!containerInfo) {
-            let cmd = "docker run -d -l \"com.docker.compose.project=web-renderer\" --expose "+port+" -e DISPLAY_WIDTH="+screenSizeX+" -e DISPLAY_HEIGHT="+screenSizeY+" --network="+this.networkName+" --name web-renderer-" + sessionID + " --rm "+dockerImage;
+            let cmd = "docker run -d -l \"com.docker.compose.project=web-renderer\" --expose "+port+" -e DISPLAY_WIDTH="+screenSizeX+" -e DISPLAY_HEIGHT="+screenSizeY+" --network="+this.networkName+" --name " +this.prefix+ sessionID + " --rm "+dockerImage;
             //docker run -d -l "com.docker.compose.project=web-renderer" --expose 8080 -e DISPLAY_WIDTH=1024 -e DISPLAY_HEIGHT=768 --network=web_renderer_network --name web-renderer-local-test --rm registry.aptero.co/web-renderer-v2:latest
             this.execDockerCommand(cmd);
         }
@@ -94,8 +110,8 @@ export class NoVNCdocker{
             containerInfo = await this.checkIfExist(sessionID);
         }
         try {
-            await this.resume(sessionID);//revive container on heart beat /* may fail if containert already started etv...*/
             await this.hearBeat(sessionID);//initial heart beat
+            await this.resume(sessionID);//revive container on heart beat. may fail if container already started etc...
         }catch (e) {
             /* do nothing */
         }
@@ -107,10 +123,10 @@ export class NoVNCdocker{
     }
 
     convertSid(sid:string){
-        if(sid.startsWith("web-renderer-")){
+        if(sid.startsWith(this.prefix)){
             return sid;
         }else{
-            return "web-renderer-"+sid;
+            return this.prefix+sid;
         }
     }
 
