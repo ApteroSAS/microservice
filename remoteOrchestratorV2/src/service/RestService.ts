@@ -31,9 +31,15 @@ export class RestService {
         });
 
         router.post('/create', (req, res) => {
-            let data: { localSessionID: string, remoteScreenSessionId: string, screenSizeX: number, screenSizeY: number, startUrl: string,dockerImage:string } = req.body;
+            let data: {
+                localSessionID: string,
+                remoteScreenSessionId: string,
+                screenSizeX: number,
+                screenSizeY: number,
+                dockerImage:string,
+                imageParams:any } = req.body;
             try {
-                this.noVNCdocker.createOrRetrieveScreen(data.remoteScreenSessionId, data.screenSizeX, data.screenSizeY, data.startUrl,data.dockerImage || this.defaultImage).then((resData) => {
+                this.noVNCdocker.createOrRetrieveScreen(data.remoteScreenSessionId, data.screenSizeX, data.screenSizeY,data.dockerImage || this.defaultImage,data.imageParams).then((resData) => {
                     res.json(resData);
                 }).catch(err => {
                     console.error(err);

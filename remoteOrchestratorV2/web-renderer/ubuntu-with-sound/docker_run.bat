@@ -1,0 +1,1 @@
+docker run -d -l "com.docker.compose.project=web-renderer" --expose 8080 -e DISPLAY_WIDTH=1024 -e DISPLAY_HEIGHT=768 --network=web_renderer_network --name web-renderer-test-v3 --rm registry.aptero.co/web-renderer-v3:latest

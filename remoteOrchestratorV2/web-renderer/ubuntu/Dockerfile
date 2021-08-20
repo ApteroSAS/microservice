@@ -18,6 +18,16 @@ RUN set -ex; \
       xvfb
 
 RUN apt install -y firefox
+RUN apt install -y chromium-browser
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+RUN set -ex; \
+    apt-get install -y \
+      fonts-liberation \
+      libgbm1 \
+      libnspr4 \
+      libnss3 \
+      xdg-utils
+RUN dpkg -i google-chrome-stable_current_amd64.deb
       
 # Setup demo environment variables
 ENV HOME=/root \
@@ -28,8 +38,12 @@ ENV HOME=/root \
     DISPLAY=:0.0 \
     DISPLAY_WIDTH=1280 \
     DISPLAY_HEIGHT=720 \
-    RUN_XTERM=no \
-    RUN_FLUXBOX=yes
+	URL=https://www.google.com
+	
+RUN useradd -ms /bin/bash chrome
 COPY . /app
+COPY ./fluxbox_conf/ /root/.fluxbox/
+#COPY ./chrome_conf/ /root/.config/google-chrome
+COPY ./chrome_conf/ /root/chromeTemp
 CMD ["/app/entrypoint.sh"]
 EXPOSE 8080
