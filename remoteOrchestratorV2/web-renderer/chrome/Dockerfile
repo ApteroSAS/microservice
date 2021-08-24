@@ -42,7 +42,7 @@ ENV HOME=/root \
 	
 RUN useradd -ms /bin/bash chrome
 COPY . /app
-#COPY ./fluxbox_conf/ /home/chrome/.config/.fluxbox/
+COPY ./fluxbox_conf/ /home/chrome/.config/.fluxbox/
 
 # make sure .config dir exists
 RUN mkdir -p /home/chrome/.config
