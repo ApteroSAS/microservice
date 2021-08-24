@@ -1,0 +1,26 @@
+{
+   "blankTabTitle": {
+      "description": "Output for blank title page",
+      "message": "\u003CBlank>"
+   },
+   "contextMenuTitle": {
+      "description": "Name context menu",
+      "message": "Tabs"
+   },
+   "description": {
+      "description": "About extension",
+      "message": "Full-screen mode (f11)"
+   },
+   "name": {
+      "description": "Extension name",
+      "message": "Fullscreen address bar"
+   },
+   "newTab": {
+      "description": "New tab in context menu",
+      "message": "New tab"
+   },
+   "placeholderSuggest": {
+      "description": "Placeholder on input tab",
+      "message": "Start typing the name of the tab..."
+   }
+}

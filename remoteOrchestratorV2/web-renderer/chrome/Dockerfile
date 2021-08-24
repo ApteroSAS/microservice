@@ -49,5 +49,14 @@ RUN mkdir -p /home/chrome/.config
 RUN chown chrome:chrome /home/chrome/.config
 COPY --chown=chrome:chrome ./chrome_conf/ /home/chrome/.config/google-chrome
 
+RUN mkdir -p /root/.vnc/
+RUN touch /root/.vnc/passwd
+RUN x11vnc -storepasswd password /root/.vnc/passwd
+
+RUN cd /home/chrome/.config/google-chrome && chmod +x install-chrome.sh && ./install-chrome.sh
+
+#kiosk or app
+ENV MODE=kiosk
+
 CMD ["/app/entrypoint.sh"]
 EXPOSE 8080

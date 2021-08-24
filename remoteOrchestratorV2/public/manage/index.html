@@ -26,7 +26,11 @@
         host: paramHost || "meet.aptero.co"
     }
 
-    function generateNewFrame(sessionID, width, height, image,imageParams) {
+    function generateNewFrame(sessionID, width, height, image,imageParams,password) {
+        if(!imageParams){
+            imageParams={}
+        }
+        imageParams["PASSWORD"] = password;
         return "web-browser:" + btoa(JSON.stringify({
             sessionID,
             width,
@@ -41,8 +45,9 @@
         const width = document.getElementById("width").value;
         const height = document.getElementById("height").value;
         const image = document.getElementById("type").value;
+        const password = document.getElementById("password").value;
         const imageParams = JSON.parse(document.getElementById("image_params").value);
-        document.getElementById("result").value = generateNewFrame(sessionid, width, height, image,imageParams);
+        document.getElementById("result").value = generateNewFrame(sessionid, width, height, image,imageParams,password);
         document.getElementById("vm_url").value = document.getElementById("result").value;
     }
 
@@ -58,6 +63,7 @@
 
     $("document").ready(function () {
         document.getElementById("sessionid").value = document.getElementById("sessionid").value + "-" + makeid(5);
+        document.getElementById("password").value = document.getElementById("password").value + "-" + makeid(5);
     });
 </script>
 INTERNAL USE ONLY
@@ -68,10 +74,12 @@ INTERNAL USE ONLY
     <input id="sessionid" type="text" value="public"/><br/>
     Width: <input id="width" type="text" value="1024"/><br/>
     Height: <input id="height" type="text" value="768"/><br/>
+    Password (stored in link no need to remember): <input id="password" type="text" value="pw"/><br/>
     Type ([registry.aptero.co/chrome-renderer,registry.aptero.co/ubuntu-renderer,registry.aptero.co/ubuntu-with-sound-renderer]):<br/>
     <input id="type" type="text" style="min-width:50%" value="registry.aptero.co/chrome-renderer"/><br/>
+    Image parameters: <br/>
+    <input id="image_params" type="text" style="width:100%" value='{}' placeholder='{"URL":"https://www.google.com","KIOSK_BTN":"true","MODE":"kiosk"}'/>
     <input type="button" value="Genrate New VM Link" onclick="display()"> <br/>
-    <input id="image_params" type="text" style="width:100%" value='{"URL":"https://www.google.com"}' placeholder='{"URL":"https://www.google.com"}'/>
     Link: <input id="result" type="text" style="width:100%"/><br/>
 </form>
 
@@ -84,7 +92,7 @@ ROOM SID: <input id="room_sid" type="text" value=""/><br>
 
 <h1>Display VM</h1>
 <script>
-    function generateNoVNCLink(vmUrl) {
+    function generateNoVNCLink(vmUrl,password) {
         vmUrl = vmUrl.replace("wss", "https"); //replace first
         vmUrl = new URL(vmUrl);
         const host = vmUrl.host;
@@ -96,6 +104,7 @@ ROOM SID: <input id="room_sid" type="text" value=""/><br>
         novncURL.searchParams.set("port", port);
         novncURL.searchParams.set("path", path);
         novncURL.searchParams.set("scale", true);
+        novncURL.searchParams.set("password", password);
         //https://novnc.com/noVNC/vnc_lite.html?host=meet.aptero.co&port=443&path=reverse/172.20.0.7/8080/websockify&scale=true
         return novncURL.toString();
     }
@@ -118,7 +127,7 @@ ROOM SID: <input id="room_sid" type="text" value=""/><br>
             }).then(async resp => {
                 resp = resp.data;
                 const url = "wss://" + window.service.host + "/reverse/" + resp.ip + "/" + resp.port + "/websockify";
-                resolve(url);
+                resolve({url,password:metaData.imageParams?metaData.imageParams.PASSWORD:undefined});
             }).catch(err => {
                 console.log(err);
                 reject(err);
@@ -129,8 +138,8 @@ ROOM SID: <input id="room_sid" type="text" value=""/><br>
     //wss://meet.aptero.co/reverse/172.20.0.7/8080/websockify
     async function generateLink() {
         let screenSRC = document.getElementById("vm_url").value
-        let vmUrl = await getNoVNCLink(screenSRC);
-        let vmVNCLink = generateNoVNCLink(vmUrl);
+        let data = await getNoVNCLink(screenSRC);
+        let vmVNCLink = generateNoVNCLink(data.url,data.password);
         //window.open(vmVNCLink, '_blank').focus();
         const atag = document.getElementById("vm_vnc_link");
         atag.style.visibility = "visible";
@@ -140,7 +149,7 @@ ROOM SID: <input id="room_sid" type="text" value=""/><br>
 
 VM Url: <input id="vm_url" type="text" style="width:100%"
                placeholder="web-browser:eyJzZXNzaW9uSUQiOiJwdWJsaWMtZ25wUnciLCJzdGFydFVybCI6ImxpbnV4Iiwid2lkdGgiOiIxMDI0IiwiaGVpZ2h0IjoiNzY4In0=/web-browser.mp4"/><br>
-<input type="button" value="Generate Link" onclick="generateLink()"></br>
+<input type="button" value="Generate VM Control Link" onclick="generateLink()"></br>
 <a id="vm_vnc_link" href="#" style="visibility:hidden">Click to connect to VM</a></br>
 
 </body>

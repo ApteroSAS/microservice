@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head><title>Kiosk Mode Extension Options</title>
+<style>
+.fade{
+    opacity:0;
+}
+.elementToFadeInAndOut {
+    animation: fadeInOut 4s linear forwards;
+}
+@keyframes fadeInOut {
+ 0% { opacity:0; }
+ 50% { opacity:1; } 
+ 100% { opacity:0; } 
+}
+</style>
+</head>
+<body>
+<font size="+3"><u>KIOSK Option</u></font>
+<p>Enter Kiosk URL       : <input type="text" id="url" style="width:400px"> </p>
+<p>Enter Kiosk Timer (in sec) : <input type="number" id="kTimer" >  </p>
+
+<p>  <div id="status" class="fade"></div>  </p>
+<button id="save">Save</button>
+
+<script src="js/options.js"></script>
+</body>
+</html>

@@ -42,8 +42,12 @@ ENV HOME=/root \
 	
 RUN useradd -ms /bin/bash chrome
 COPY . /app
-COPY ./fluxbox_conf/ /root/.fluxbox/
-#COPY ./chrome_conf/ /root/.config/google-chrome
-COPY ./chrome_conf/ /root/chromeTemp
+#COPY ./fluxbox_conf/ /home/chrome/.config/.fluxbox/
+
+# make sure .config dir exists
+RUN mkdir -p /home/chrome/.config
+RUN chown chrome:chrome /home/chrome/.config
+COPY --chown=chrome:chrome ./chrome_conf/ /home/chrome/.config/google-chrome
+
 CMD ["/app/entrypoint.sh"]
 EXPOSE 8080
