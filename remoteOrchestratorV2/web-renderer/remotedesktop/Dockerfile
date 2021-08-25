@@ -10,7 +10,7 @@ RUN set -ex; \
     && apt autoremove -y \
     && rm -rf /var/lib/apt/list
 
-COPY ./conf.d/ . /app/conf.d/
+COPY . . /app/
 
 CMD ["/app/entrypoint.sh"]
 EXPOSE 8080

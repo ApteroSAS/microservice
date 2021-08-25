@@ -7,4 +7,4 @@ rem https://meet.aptero.co/service/remote/orchestrator/static/manage/vnc/vnc.htm
 
 call docker_build.bat
 docker rm remote-renderer-test-v2 -f
-docker run -d -l "com.docker.compose.project=web-renderer" -p 8080:8080 -e DISPLAY_WIDTH=1366 -e DISPLAY_HEIGHT=768 -e KIOSK_BTN=true -e PASSWORD=aptero -e MODE=kiosk -e URL=https://www.google.com --network=web_renderer_network --name remote-renderer-test-v2 remote-renderer:latest
+docker run -d -l "com.docker.compose.project=web-renderer" -p 8080:8080 -e VNC_HOST=172.20.0.4 -e VNC_PORT=5900 --network=web_renderer_network --name remote-renderer-test-v2 remote-renderer:latest
