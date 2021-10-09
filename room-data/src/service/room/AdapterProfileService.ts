@@ -21,6 +21,10 @@ export default class AdapterProfileService {
         profiles["janus"] = {
             adapter: "janus"
         };
+        profiles["socketio"] = {
+            adapter: "socketio",
+            url: "https://socketioadapter.aptero.co"
+        };
         //meet
         profiles["twilio"] = {
             adapter: "twilio",
