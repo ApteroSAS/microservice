@@ -94,7 +94,7 @@ export class RestService {
         router.get('/vm/pause/:sid', (req, res) => {
             const sid = req.params.sid;
             try {
-                this.noVNCdocker.pause(sid).then((resData) => {
+                this.noVNCdocker.pauseOrCleanUp(sid).then((resData) => {
                     res.json(resData);
                 }).catch(err => {
                     console.error(err);

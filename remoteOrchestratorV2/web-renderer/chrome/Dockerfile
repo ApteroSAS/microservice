@@ -17,6 +17,7 @@ RUN set -ex; \
       x11vnc \
       xterm \
       xvfb \
+      python \
     && apt autoclean -y \
     && apt autoremove -y \
     && rm -rf /var/lib/apt/list
@@ -82,7 +83,13 @@ RUN x11vnc -storepasswd password /root/.vnc/passwd
 RUN cd /home/chrome/.config/google-chrome && chmod +x install-chrome.sh && ./install-chrome.sh
 
 #kiosk or app
-ENV MODE=kiosk
+ENV URL="https://aptero.co"
+#kiosk or app
+ENV MODE="kiosk"
+ENV LANG="en"
+#ENV KIOSK_BTN="true"
+#ENV EXTENSION_LIST="[]"
+#ENV PASSWORD="toto"
 
 CMD ["/app/entrypoint.sh"]
 EXPOSE 8080
