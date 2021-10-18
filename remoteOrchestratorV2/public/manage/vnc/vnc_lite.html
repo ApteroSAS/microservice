@@ -102,7 +102,7 @@
 
         // Show a status text in the top bar
         function status(text) {
-            document.getElementById('status').textContent = text;
+            console.log(text);
         }
 
         // This function extracts the value of one variable from the
@@ -167,13 +167,20 @@
         // Set parameters that can be changed on an active connection
         rfb.viewOnly = readQueryVariable('view_only', false);
         rfb.scaleViewport = readQueryVariable('scale', false);
+
+        //send heart beat to activate the VM # specific aptero
+        fetch("https://meet.aptero.co/service/remote/orchestrator/vm/resume/"+readQueryVariable('vmsid'))
+        fetch("https://meet.aptero.co/service/remote/orchestrator/heart/beat/"+readQueryVariable('vmsid'))
+        setInterval(()=>{
+            fetch("https://meet.aptero.co/service/remote/orchestrator/heart/beat/"+readQueryVariable('vmsid'))
+        },5*60*60*1000)
     </script>
 </head>
 
 <body>
-    <div id="top_bar">
+    <!--<div id="top_bar">
         <div id="status">Loading</div>
-    </div>
+    </div>-->
     <div id="screen">
         <!-- This is where the remote screen will appear -->
     </div>

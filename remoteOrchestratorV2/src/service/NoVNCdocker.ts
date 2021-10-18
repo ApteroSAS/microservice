@@ -4,7 +4,7 @@ const Docker = require('dockerode');
 export class NoVNCdocker {
     private docker: any;
     private networkName = "web_renderer_network";
-    private prefix = "web-renderer-";
+    public readonly prefix = "web-renderer-";
     lastHeartBeat = {};
     heartBeatDeadTimeMs = (process.env.HEARTBEATMS ? parseInt(process.env.HEARTBEATMS) : null) || 10 * 60 * 1000;
 
@@ -141,13 +141,16 @@ export class NoVNCdocker {
             /* do nothing */
         }
         let ip = containerInfo.NetworkSettings.Networks[this.networkName].IPAddress;
+        let vmsid = this.prefix + sessionID;
         return {
             ip,
-            port
+            port,
+            vmsid
         };
     }
 
     convertSid(sid: string) {
+        //security ensure that we are using only prefixed container
         if (sid.startsWith(this.prefix)) {
             return sid;
         } else {
@@ -158,7 +161,7 @@ export class NoVNCdocker {
     hearBeat(sid: string) {
         sid = this.convertSid(sid);
         console.log("heart beat :" + sid);
-        if (this.lastHeartBeat[sid] && this.lastHeartBeat[sid].getTime() < (new Date().getTime() - this.heartBeatDeadTimeMs)) {
+        if (!this.lastHeartBeat[sid] || (this.lastHeartBeat[sid] && this.lastHeartBeat[sid].getTime() < (new Date().getTime() - this.heartBeatDeadTimeMs))) {
             this.resume(sid);//revive container on heart beat
         }
         this.lastHeartBeat[sid] = new Date();
@@ -188,5 +191,28 @@ export class NoVNCdocker {
         sid = this.convertSid(sid);
         let cmd = "docker unpause " + sid;
         return await this.execDockerCommand(cmd);
+    }
+
+    async remove(sid: string): Promise<any> {
+        sid = this.convertSid(sid);
+        let cmd = "docker rm -f " + sid;
+        return await this.execDockerCommand(cmd);
+    }
+
+    async listContainer(): Promise<String[]> {
+        return new Promise<String[]>((resolve, reject) => {
+            this.docker.listContainers((err, containers) => {
+                let ret = [];
+                containers.forEach((containerInfo) => {
+                    if (containerInfo.Names && containerInfo.Names.length === 1) {
+                        let name: string = containerInfo.Names[0];
+                        if (name.startsWith("/" + this.prefix)) {
+                            ret.push(name.replace("/",""));
+                        }
+                    }
+                });
+                resolve(ret);
+            });
+        });
     }
 }
