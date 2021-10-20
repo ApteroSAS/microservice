@@ -1,6 +1,7 @@
 import {PgRoom} from "@root/postgrest/PgRoom";
 import RoomDataBase from "@root/service/room/RoomDataBase";
 import PhoenixController from "@root/phoenix/PhoenixController";
+import {properties} from "@root/properties/properties";
 
 export default class AutoUpdateService {
 
@@ -8,6 +9,9 @@ export default class AutoUpdateService {
     lastRoomData = {};
 
     constructor(private pgRoom:PgRoom, private roomDataBase:RoomDataBase,private phoenixController:PhoenixController){
+        if(properties.MONGODB==="DISABLED") {
+            return;
+        }
         roomDataBase.onRoomUpdate(async (room,data) => {
             if(data && data.operationType === "replace" && room && room.roomSID) {
                 await this.processRoom(room);

@@ -1,12 +1,16 @@
 import {PgRoom} from "@root/postgrest/PgRoom";
 import RoomDataBase from "@root/service/room/RoomDataBase";
 import PhoenixController from "@root/phoenix/PhoenixController";
+import {properties} from "@root/properties/properties";
 
 export default class AutoOpenService {
 
     channels = {};
 
     constructor(private pgRoom:PgRoom, private roomDataBase:RoomDataBase,private phoenixController:PhoenixController){
+        if(properties.MONGODB==="DISABLED") {
+            return;
+        }
         roomDataBase.onRoomUpdate(room => {
             if(room && room.roomSID) {
                 this.attachOrDetachObserver(room);

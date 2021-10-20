@@ -1,4 +1,5 @@
 import {roomDB, RoomDTO} from "@root/mongodb/RoomModel";
+import {properties} from "@root/properties/properties";
 
 
 export default class RoomDataBase {
@@ -12,6 +13,10 @@ export default class RoomDataBase {
 
     findRoom(roomSID:string):Promise<RoomDTO>{
         return new Promise<RoomDTO>(async (resolve, reject) => {
+            if(properties.MONGODB==="DISABLED") {
+                resolve({} as any);
+                return;
+            }
             if (roomSID === "" || !roomSID) {
                 reject("wrong id :" + roomSID);
                 return;
@@ -23,6 +28,10 @@ export default class RoomDataBase {
 
     findRoomByMongoId(mongoId:any):Promise<RoomDTO>{
         return new Promise<RoomDTO>(async (resolve, reject) => {
+            if(properties.MONGODB==="DISABLED") {
+                resolve({} as any);
+                return;
+            }
             if (!mongoId) {
                 reject("wrong id :" + mongoId);
                 return;
@@ -33,6 +42,9 @@ export default class RoomDataBase {
     }
 
     onRoomUpdate(callback: (room,data) => void) {
+        if(properties.MONGODB==="DISABLED") {
+            return {} as any;
+        }
         roomDB.watch().on('change', (data:any) =>{
             //console.log(new Date(), data)
             callback(data.fullDocument , data);
@@ -40,6 +52,9 @@ export default class RoomDataBase {
     }
 
     async getRooms() {
+        if(properties.MONGODB==="DISABLED") {
+            return {} as any;
+        }
         let ret = [];
         let documents = await roomDB.find({ });
         documents.forEach((document:any) => {
@@ -49,6 +64,9 @@ export default class RoomDataBase {
     }
 
     async updateRoom(roomSID: string, data: any) {
+        if(properties.MONGODB==="DISABLED") {
+            return {} as any;
+        }
         let room:any = await this.findRoom(roomSID);
         const query = {'roomSID': roomSID};
         if(room) {

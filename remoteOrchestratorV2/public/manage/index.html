@@ -47,7 +47,7 @@ INTERNAL USE ONLY
     <script>
         const paramHost = new URL(window.location.href).searchParams.get("host");
         window.service = {
-            host: paramHost || "meet.aptero.co"
+            host: paramHost || window.location.host
         }
 
         function generateNewFrame(sessionID, width, height, image, imageParams, password) {

@@ -33,45 +33,47 @@ const models = {
 
 // Connect to MongoDB with Mongoose.
 
-let connect = function() {
-    mongoose.connect(
-        db,
-        {
-            useUnifiedTopology: false,
-            useFindAndModify: false,
-            useCreateIndex: true,
-            useNewUrlParser: true,
-            autoReconnect: true,
-            //poolSize: 3,
-            reconnectTries: 10,
-            reconnectInterval: 1000,
-            //socketTimeoutMS: 5000
-        }
-    ).then(() => {
-        console.log("MongoDB connected")
-    }).catch(err => console.log(err));
-};
-connect();
+if(properties.MONGODB!=="DISABLED") {
+    let connect = function () {
+        mongoose.connect(
+            db,
+            {
+                useUnifiedTopology: false,
+                useFindAndModify: false,
+                useCreateIndex: true,
+                useNewUrlParser: true,
+                autoReconnect: true,
+                //poolSize: 3,
+                reconnectTries: 10,
+                reconnectInterval: 1000,
+                //socketTimeoutMS: 5000
+            }
+        ).then(() => {
+            console.log("MongoDB connected")
+        }).catch(err => console.log(err));
+    };
+    connect();
 
-let isConnectedBefore = false;
-mongoose.connection.on('error', function() {
-    console.log('Could not connect to MongoDB');
-});
+    let isConnectedBefore = false;
+    mongoose.connection.on('error', function() {
+        console.log('Could not connect to MongoDB');
+    });
 
-mongoose.connection.on('disconnected', function(){
-    process.exit(1);//in a container this will be restarted automaticaly
-    console.log('Lost MongoDB connection...');
-    if (!isConnectedBefore)
-        connect();
-});
-mongoose.connection.on('connected', function() {
-    isConnectedBefore = true;
-    console.log('Connection established to MongoDB');
-});
+    mongoose.connection.on('disconnected', function(){
+        process.exit(1);//in a container this will be restarted automaticaly
+        console.log('Lost MongoDB connection...');
+        if (!isConnectedBefore)
+            connect();
+    });
+    mongoose.connection.on('connected', function() {
+        isConnectedBefore = true;
+        console.log('Connection established to MongoDB');
+    });
 
-mongoose.connection.on('reconnected', function() {
-    console.log('Reconnected to MongoDB');
-});
+    mongoose.connection.on('reconnected', function() {
+        console.log('Reconnected to MongoDB');
+    });
+}
 
 let expressApp = express(feathers());
 expressApp.use(bodyParser.json());
