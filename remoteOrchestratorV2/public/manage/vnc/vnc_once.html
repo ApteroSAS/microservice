@@ -143,6 +143,17 @@
             return check;
         }
 
+        function convertLocal(local){
+            //should return eg en_US.UTF-8
+            if(local.indexOf("-")!==-1){
+                //eg en-US
+                return local.replace("-","_")+".UTF-8";
+            }else{
+                //eg "fr"
+                return local+"_"+local.toUpperCase()+".UTF-8";
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", async function(event) {
             const height = window.document.body.offsetHeight;
             const width = window.document.body.offsetWidth;
@@ -153,7 +164,8 @@
                 "URL":readQueryVariable('url', "www.aptero.co"),
                 "MODE":"kiosk",
                 "EXTENSION_LIST":mobile?"['virtual-keyboard']":"[]",
-                "LANG":readQueryVariable('lang', navigator.language),
+                "LANG":readQueryVariable('lang', convertLocal(navigator.language)),
+                "LANGUAGE":readQueryVariable('lang', convertLocal(navigator.language)),
                 "EPHEMERAL":true,
                 "PASSWORD":rpassword
             };

@@ -269,14 +269,18 @@ export class NoVNCdocker {
         });
     }
 
-    async pauseOrCleanUp(sid: string): Promise<any> {
+    async pauseOrCleanUp(sid: string):Promise<void> {
         sid = this.convertSid(sid);
         if(this.ephemeralList[sid]){
-            return await this.remove(sid).then(()=>{
+            await this.pause(sid);
+            await new Promise(resolve => {
+                setTimeout(resolve, 10000); //just to be sure everything is paused
+            });
+            await this.remove(sid).then(()=>{
                 delete this.ephemeralList[sid];
             });
         }else{
-            return await this.pause(sid);
+            await this.pause(sid);
         }
     }
 

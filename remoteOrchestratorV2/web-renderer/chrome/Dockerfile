@@ -22,6 +22,14 @@ RUN set -ex; \
     && apt autoremove -y \
     && rm -rf /var/lib/apt/list
 
+RUN set -ex; \
+    apt update \
+    && apt-get install -y \
+      locales \
+    && apt autoclean -y \
+    && apt autoremove -y \
+    && rm -rf /var/lib/apt/list
+
 # #RUN apt install -y chromium-browser \
 	# && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
 	# && apt-get install -y \
@@ -59,13 +67,9 @@ RUN apt autoclean -y \
 # Setup demo environment variables
 ENV HOME=/root \
     DEBIAN_FRONTEND=noninteractive \
-    LANG=en_US.UTF-8 \
-    LANGUAGE=en_US.UTF-8 \
-    LC_ALL=C.UTF-8 \
     DISPLAY=:0.0 \
     DISPLAY_WIDTH=1280 \
-    DISPLAY_HEIGHT=720 \
-	URL=https://www.google.com
+    DISPLAY_HEIGHT=720
 	
 RUN useradd -ms /bin/bash chrome
 COPY . /app
@@ -86,7 +90,9 @@ RUN cd /home/chrome/.config/google-chrome && chmod +x install-chrome.sh && ./ins
 ENV URL="https://aptero.co"
 #kiosk or app
 ENV MODE="kiosk"
-ENV LANG="en"
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US.UTF-8
+ENV LC_ALL=C.UTF-8
 #ENV KIOSK_BTN="true"
 #ENV EXTENSION_LIST="[]"
 #ENV PASSWORD="toto"

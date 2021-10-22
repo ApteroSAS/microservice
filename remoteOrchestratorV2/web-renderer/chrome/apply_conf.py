@@ -50,7 +50,10 @@ for entry in activatedExts:
 
 os.system("sed -i 's,%URL%,'"+os.environ.get("URL")+"',g' /app/conf.d/chrome.conf")
 os.system("sed -i 's,%MODE%,'"+os.environ.get("MODE")+"',g' /app/conf.d/chrome.conf")
-os.system("sed -i 's,%LANG%,'"+os.environ.get("LANG")+"',g' /app/conf.d/chrome.conf")
+#os.system("sed -i 's,%LANG%,'"+os.environ.get("LANG")+"',g' /app/conf.d/chrome.conf")
+
+# local-gen takes time and not that useful
+#os.system("sed -i '/"+os.environ.get("LANG")+"/s/^# //g' /etc/locale.gen && locale-gen")
 
 if(os.environ.get("PASSWORD")):
     #change password

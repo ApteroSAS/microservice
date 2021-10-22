@@ -6,4 +6,4 @@ rem http://localhost:63342/remoteOrchestratorV2/public/manage/vnc/vnc.html?host=
 rem https://meet.aptero.co/service/remote/orchestrator/static/manage/vnc/vnc.html
 call docker_build.bat
 docker rm web-renderer-test-v2 -f
-docker run -d -l "com.docker.compose.project=web-renderer" -p 8080:8080 -e DISPLAY_WIDTH=1366 -e DISPLAY_HEIGHT=768 -e KIOSK_BTN=true -e PASSWORD=aptero -e MODE=kiosk -e URL=https://www.google.com --network=web_renderer_network --name web-renderer-test-v2 chrome-renderer:latest
+docker run -d -l "com.docker.compose.project=web-renderer" -p 8080:8080 -e LANGUAGE=fr_FR.UTF-8 -e LANG=fr_FR.UTF-8 -e DISPLAY_WIDTH=1366 -e DISPLAY_HEIGHT=768 -e KIOSK_BTN=true -e PASSWORD=aptero -e MODE=kiosk -e URL=https://www.google.com --network=web_renderer_network --name web-renderer-test-v2 chrome-renderer:latest
