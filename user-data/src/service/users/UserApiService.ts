@@ -36,6 +36,7 @@ export default class UserApiService {
             let mail = json.mail;
             let signinurl = json.signinurl;
             let name = json.name;
+            let profile=json.profile;
             if(mail) {
                 if(signinurl && mail){
                     const msg = " Merci d'utiliser Aptero! \n" +
@@ -90,7 +91,7 @@ export default class UserApiService {
                         html: msgHtml.replace("%link%",signinurl).replace("%link%",signinurl),
                     })
                 }
-                this.userdb.updateUser(accountId, mail, signinurl).then((user) => {
+                this.userdb.updateUser(accountId, mail, signinurl,profile).then((user) => {
                     res.json(user);
                 }).catch((err) => {
                     console.error(err);

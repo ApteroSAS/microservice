@@ -1,6 +1,7 @@
 import {userDB} from "@root/mongodb/UserModel";
 
 
+
 export default class UserDataBase {
 
     constructor() {
@@ -10,7 +11,7 @@ export default class UserDataBase {
     start() {
     }
 
-    async updateUser(accountId:string,email:string,signinURL:string){
+    async updateUser(accountId:string,email:string,signinURL:string,profile:string){
         return new Promise<String>(async (resolve, reject) => {
             if(!email){
                 reject("no email")
@@ -25,6 +26,10 @@ export default class UserDataBase {
             }
             if (signinURL) {
                 promises.push(this.updateUserSignInURL(email, signinURL));
+            }
+            if (profile) {
+                console.log("le profile",profile);
+                promises.push(this.updateUserProfile(email,profile));
             }
             return Promise.all(promises);
         });
@@ -109,6 +114,24 @@ export default class UserDataBase {
             }
         });
     }
+    updateUserProfile(accountId:string,profile:string){
+        return new Promise<String>((resolve, reject) => {
+            if (accountId === "" || !accountId) {
+                reject("wrong id :" + accountId);
+            }else {
+               
+                userDB.updateOne({accountId: accountId}, {
+                    profile:profile,
+                    lastUpdate: new Date().toISOString(),
+                }, {upsert: true, setDefaultsOnInsert: true}).then(() => {
+                    resolve("ok");
+                }).catch(err => {
+                    reject(err);
+                });
+            }
+        });
+    }
+
 
     updateUserSignInURL(accountId:string,signinURL:string){
         return new Promise<String>((resolve, reject) => {
@@ -126,5 +149,6 @@ export default class UserDataBase {
             }
         });
     }
+    
 
 }

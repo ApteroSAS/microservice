@@ -1,8 +1,11 @@
 import mongoose from "mongoose";
 import { ObjectID } from "mongodb";
-
+import { json } from "body-parser";
+import {userProfileDB} from "./UserProfileModel"
+//import { UserProfileModel } from "./UserProfileModel";
 const Schema = mongoose.Schema;
-
+const profile=userProfileDB.schema;
+console.log(profile);
 ObjectID.prototype.valueOf = function() {
     return this.toString();
 };
@@ -15,6 +18,8 @@ ObjectID.prototype.valueOf = function() {
     created: number,
     value: number,
  */
+
+    
 const UserSchema = new Schema({
     accountId:{
         type: String,
@@ -41,6 +46,12 @@ const UserSchema = new Schema({
         type: String,
         required: false
     },
+    
+    profile:{
+        type:profile,
+        required:false
+    }
+    
 });
 
 export const userDB = mongoose.model("User", UserSchema);
