@@ -9,18 +9,26 @@ ObjectID.prototype.valueOf = function() {
     return this.toString();
 };
 const UserProfileSchema = new Schema({
+    displayName:{
+        type:String,
+        required:false
+    },
     phoneNumber:{
         type: String,
         required: false
+    },
+    companyName:{
+        type:String,
+        required:false
+    },
+    jobTitle:{
+        type:String,
+        required:false
     },
     Bio:{
         type: String,
         required: false
     },
-    LorealMember:{
-        type:Boolean,
-        required:false
-    }
 });
 export const userProfileDB = mongoose.model("UserProfile", UserProfileSchema);
 export const UserProfileModel = userProfileDB;

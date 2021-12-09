@@ -28,6 +28,15 @@ export default class UserApiService {
                 res.status(500).json(err);
             });
         });
+        router.get('/get/user/:email', (req, res) => {
+            let email = req.params.email;
+            this.userdb.findUserDataByMail(email).then((user) => {
+                res.json(user.profile);
+            }).catch((err) => {
+                console.error(err);
+                res.status(500).json(err);
+            });
+        });
 
         router.post('/update/user', (req, res) => {
             let json = req.body;
