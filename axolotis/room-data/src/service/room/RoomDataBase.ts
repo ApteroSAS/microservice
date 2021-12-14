@@ -11,17 +11,17 @@ export default class RoomDataBase {
     start() {
     }
 
-    findRoom(roomSID:string):Promise<RoomDTO>{
+    findRoom(rid:string):Promise<RoomDTO>{
         return new Promise<RoomDTO>(async (resolve, reject) => {
             if(properties.MONGODB==="DISABLED") {
                 resolve({} as any);
                 return;
             }
-            if (roomSID === "" || !roomSID) {
-                reject("wrong id :" + roomSID);
+            if (rid === "" || !rid) {
+                reject("wrong id :" + rid);
                 return;
             }
-            let result:any = await roomDB.findOne({roomSID: roomSID}).exec();
+            let result:any = await roomDB.findOne({rid: rid}).exec();
             resolve(result);
         });
     }
