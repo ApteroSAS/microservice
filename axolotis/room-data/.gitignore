@@ -1,0 +1,5 @@
+# Dependency directories
+node_modules/
+
+# Ignore dist folder with webpack build output
+dist/
