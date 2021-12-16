@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
-import { ObjectID } from "mongodb";
+import { ObjectId } from "mongodb";
 
 const Schema = mongoose.Schema;
 
-ObjectID.prototype.valueOf = function() {
+ObjectId.prototype.valueOf = function() {
     return this.toString();
 };
 
@@ -23,9 +23,8 @@ const RoomSchema = new Schema({
         unique : true
     },
     entities:{
-        type: Array
+        type: Object
     },
-
 });
 //RoomSchema.index({roomSID:1}, {unique: true, name: "RoomIndex"});
 export const roomDB = mongoose.model("Room", RoomSchema);

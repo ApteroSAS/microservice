@@ -7,11 +7,12 @@ EXPOSE 8186
 #RUN npm -g ncu
 
 COPY ./package.json ./package.json
-COPY ./package-lock.json ./package-lock.json
+#COPY ./package-lock.json ./package-lock.json
+COPY ./yarn.lock ./yarn.lock
 COPY ./tsconfig.json ./tsconfig.json
-RUN npm install
+RUN yarn install
 COPY . .
-RUN npm run build
+RUN yarn run build
 
 #RUN npm run test
 

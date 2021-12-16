@@ -12,6 +12,6 @@ export function checkRequiredProperties(){
 checkRequiredProperties();
 
 export let properties = {
-    MONGODB: process.env.MONGODB ? process.env.MONGODB : "mongodb+srv://dev:sjkPbH1zh78vdKRY@apteromain-h7nsw.mongodb.net/axolotis-prod?retryWrites=true",
+    MONGODB: process.env.MONGODB ? process.env.MONGODB : "mongodb+srv://dev:sjkPbH1zh78vdKRY@apteromain-h7nsw.mongodb.net/axolotis-prod",
     PASSWORD: process.env.PASSWORD ? process.env.PASSWORD : "abc",
 };
