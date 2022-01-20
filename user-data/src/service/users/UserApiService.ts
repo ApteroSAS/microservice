@@ -28,6 +28,15 @@ export default class UserApiService {
                 res.status(500).json(err);
             });
         });
+        router.get('/get/user/:email', (req, res) => {
+            let email = req.params.email;
+            this.userdb.findUserDataByMail(email).then((user) => {
+                res.json(user.profile);
+            }).catch((err) => {
+                console.error(err);
+                res.status(500).json(err);
+            });
+        });
 
         router.post('/update/user', (req, res) => {
             let json = req.body;
@@ -36,6 +45,7 @@ export default class UserApiService {
             let mail = json.mail;
             let signinurl = json.signinurl;
             let name = json.name;
+            let profile=json.profile;
             if(mail) {
                 if(signinurl && mail){
                     const msg = " Merci d'utiliser Aptero! \n" +
@@ -90,7 +100,7 @@ export default class UserApiService {
                         html: msgHtml.replace("%link%",signinurl).replace("%link%",signinurl),
                     })
                 }
-                this.userdb.updateUser(accountId, mail, signinurl).then((user) => {
+                this.userdb.updateUser(accountId, mail, signinurl,profile).then((user) => {
                     res.json(user);
                 }).catch((err) => {
                     console.error(err);
