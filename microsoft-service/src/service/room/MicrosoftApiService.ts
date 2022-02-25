@@ -9,11 +9,8 @@ export default class MicrosoftApiService {
     constructor() {
     }
 
-    mountAPI() {
+    async mountAPI() {
         let router = express.Router();
-        /*this.microsoftAPIBridge.getProfile().then(value => {
-            console.log(value);
-        })*/
 
         let apiVersion = "1.0.0";//increment this each time you change the api and break the backward compatibility (semver)
         router.get('/api/version', (req, res) => {
@@ -21,33 +18,23 @@ export default class MicrosoftApiService {
         });
 
         //generate ephemeral meeting
-        router.get('/user', async (req, res) => {
-            res.json(this.microsoftAPIBridge.getProfile());
+        router.post('/api/messages', async (req, res) => {
+            this.microsoftAPIBridge.notifyCallUpdate(await req.body)
+            res.json("OK");
         });
 
-        router.get('/oauth/callback', async (req, res) => {
-                const tokenRequest = {
-                    code: req.query.code,
-                    scopes: process.env.OAUTH_SCOPES.split(','),
-                    redirectUri: process.env.OAUTH_REDIRECT_URI
-                };
+        router.get('/user/admin/profile', async (req, res) => {
+            res.json(await this.microsoftAPIBridge.getAdminProfile());
+        });
 
-                try {
-                    const response:any = await this.microsoftAPIBridge.processOauthToken(tokenRequest);
-                    console.error('error_msg', {
-                        message: 'Access token',
-                        debug: response.accessToken
-                    });
-                } catch (error) {
-                    console.error('error_msg', {
-                        message: 'Error completing authentication',
-                        debug: JSON.stringify(error, Object.getOwnPropertyNames(error))
-                    });
-                }
+        router.post('/call/create', async (req, res) => {
+            res.json(await this.microsoftAPIBridge.createMultiCall(await req.body.emails));
+        });
 
-                res.redirect('/');
-            }
-        );
+        router.post('/call/participants/configureMixer', async (req, res) => {
+            let data = await req.body;
+            res.json(await this.microsoftAPIBridge.configureAudioMixer(data.callId,data.sourceEmail,data.participantEmail));
+        });
 
         this.expressApp.use('/', router);
     }
