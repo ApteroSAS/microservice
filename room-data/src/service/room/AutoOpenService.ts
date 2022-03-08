@@ -11,16 +11,20 @@ export default class AutoOpenService {
         if(properties.MONGODB==="DISABLED") {
             return;
         }
-        roomDataBase.onRoomUpdate(room => {
-            if(room && room.roomSID) {
-                this.attachOrDetachObserver(room);
-            }
-        });
-        roomDataBase.getRooms().then(documents => {
-            documents.forEach((room) => {
-                this.attachOrDetachObserver(room);
+        if(properties.AUTO_OPENER_FEATURE && properties.AUTO_OPENER_FEATURE==="true") {
+            roomDataBase.onRoomUpdate(room => {
+                if (room && room.roomSID) {
+                    this.attachOrDetachObserver(room);
+                }
             });
-        });
+            roomDataBase.getRooms().then(documents => {
+                documents.forEach((room) => {
+                    this.attachOrDetachObserver(room);
+                });
+            });
+            console.log("AUTO_OPENER_FEATURE : enabled")
+        }
+        console.log("AUTO_OPENER_FEATURE : disabled")
     }
 
 

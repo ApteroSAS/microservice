@@ -133,6 +133,15 @@ export default class RoomApiService {
             });
         });
 
+        router.get('/room/:sid/embed/token/', async (req, res) => {
+            let roomSID = req.params.sid;
+            this.pgRoom.getEmbedToken(roomSID).then((token) => {
+                res.json(token);
+            }).catch((err) => {
+                res.status(500).json(err);
+            });
+        });
+
         router.get('/adapter/:sid/profile', (req, res) => {
             let aid = req.params.sid;
             try {
