@@ -46,6 +46,12 @@ export default class MicrosoftAPIBridge {
         return user;
     }
 
+    async getProfile(email: any) {
+        const client = this.getAuthenticatedAppClient();
+        let users = await this.getUserFromMail(email);
+        return users;
+    }
+
     notifyCallUpdate(data) {
         console.log(data);
         this.events.emit("call-update", data);
@@ -211,6 +217,7 @@ export default class MicrosoftAPIBridge {
         };
         let callId = "";
         let confirmation = new Promise(resolve => {
+            setTimeout(resolve,20000);//20s timeout
             let fct = args => {
                 let callRessourceId = args.value[0].resource;
                 if (callRessourceId === "/app/calls/" + callId) {
@@ -456,6 +463,15 @@ export default class MicrosoftAPIBridge {
             .filter("mail eq '" + mail + "'")
             .get();
         return user;
+    }
+
+    async getFirstUserFromMail(mail) {
+        const client = this.getAuthenticatedAppClient();
+        const user = await client
+            .api('users/')
+            .filter("mail eq '" + mail + "'")
+            .get();
+        return user.value[0];
     }
 
     async getOnlineMeeting() {

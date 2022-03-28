@@ -24,16 +24,40 @@ export default class MicrosoftApiService {
         });
 
         router.get('/user/admin/profile', async (req, res) => {
-            res.json(await this.microsoftAPIBridge.getAdminProfile());
+            try{
+                res.json(await this.microsoftAPIBridge.getAdminProfile());
+            }catch(err){
+                console.error(err);
+                res.status(500).json(err);
+            }
+        });
+        router.get('/user/:email/profile', async (req, res) => {
+            let email = req.params.email;
+            try{
+                res.json(await this.microsoftAPIBridge.getProfile(email));
+            }catch(err){
+                console.error(err);
+                res.status(500).json(err);
+            }
         });
 
         router.post('/call/create', async (req, res) => {
-            res.json(await this.microsoftAPIBridge.createMultiCall(await req.body.emails));
+            try{
+                res.json(await this.microsoftAPIBridge.createMultiCall(await req.body.emails));
+            }catch(err){
+                console.error(err);
+                res.status(500).json(err);
+            }
         });
 
         router.post('/call/participants/configureMixer', async (req, res) => {
-            let data = await req.body;
-            res.json(await this.microsoftAPIBridge.configureAudioMixer(data.callId,data.sourceEmail,data.participantEmail));
+            try{
+                let data = await req.body;
+                res.json(await this.microsoftAPIBridge.configureAudioMixer(data.callId,data.sourceEmail,data.participantEmail));
+            }catch(err){
+                console.error(err);
+                res.status(500).json(err);
+            }
         });
 
         this.expressApp.use('/', router);
