@@ -7,6 +7,7 @@
     "go": "npx ts-node ./src/lodGenerator.ts src/models/sphere-prelod/sphereOutput.gltf",
     "loadLOD": "npx ts-node ./src/lodGenerator.ts src/models/msft-lod.gltf",
     "mergeAndLOD" : "npx ts-node ./src/lodGenerator.ts src/models/Psphere_LOD_0.gltf src/models/Psphere_LOD_1.gltf src/models/Psphere_LOD_2.gltf src/models/Psphere_LOD_3.gltf",
+    "convertTree": "npx ts-node ./src/lodGenerator.ts .\\src\\models\\prelod\\arbre_output.gltf\n",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

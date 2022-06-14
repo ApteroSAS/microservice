@@ -28,3 +28,8 @@ The terminal is used for merge as the script function seemed to not have as many
 
 Other scripts are not ready yet.
 
+
+## Tree merging and LOD
+``
+gltf-transform merge .\src\models\arbre_lod\LOD0Arbre2.gltf .\src\models\arbre_lod\LOD1Arbre2.gltf .\src\models\arbre_lod\LOD2Arbre2.gltf .\src\models\arbre_lod\LOD3Arbre2.gltf .\src\models\arbre_lod\LOD4Arbre2.gltf .\src\models\prelod\arbre_output.gltf --vertex-layout separate --partition true
+``

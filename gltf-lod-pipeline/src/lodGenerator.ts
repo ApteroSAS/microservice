@@ -45,7 +45,6 @@ import {exit} from 'process';
         let previouslyfound = [];//list of previously found accessors to prevent duplicates, as a 3D model may have multiple
         // VEC3 accessors
         let j = 0;//valid accessor index
-
         for (let i = 0; i < accessorlist.length; i++) {
             let accessor = accessorlist[i];
             //there may be multiple occurrences of VEC3 for a specific asset
@@ -65,12 +64,14 @@ import {exit} from 'process';
 
         //Generate LOD metadata
 
-        const LOD0 = nodelist[nodeIndexSize[0].id]
+        //Each individual scene represent a LOD, nodelist is not a good representation as some LOD may have childs node not in order
+        const LOD0 = scenelist[nodeIndexSize[0].id].listChildren()[0]
         const lodList = MFST_lod.createLODList();
         let screenCoverage = [];
 
         for (let i = 0; i < nodeIndexSize.length; i++) {
-            let node = nodelist[nodeIndexSize[i].id];
+            //Main LOD is the first node of each scene
+            let node = scenelist[nodeIndexSize[i].id].listChildren()[0];
             //console.log(node.getName(),nodeIndexSize[i].size);
 
             if (i != 0) {
@@ -79,7 +80,7 @@ import {exit} from 'process';
                 //TODO : consider performance with vertex per pixel calculations for determining LOD distance per level
                 screenCoverage.push(nodeIndexSize[i].size / nodeIndexSize[0].size)
             }
-            if (i == nodelist.length - 1) {
+            if (i == scenelist.length - 1) {
                 //push a second value for the last one
                 screenCoverage.push(1 / nodeIndexSize[i].size / nodeIndexSize[0].size)
             }
@@ -92,9 +93,11 @@ import {exit} from 'process';
         //then delete all duplicate scene
 
         function getSceneDepth(scene:Scene):number{
-            let nodechilds = 0;
-            scene.traverse(() => ++nodechilds)
-            return nodechilds;
+            let childhoods = 0;
+            scene.traverse((e) => {
+                ++childhoods;
+            })
+            return childhoods;
         }
         function hotswap(oldNode:Node, newNode:Node) {
             //console.log("old", oldNode.getName(), "new",newNode.getName())
@@ -103,16 +106,17 @@ import {exit} from 'process';
             const parent = oldNode.getParent() as Node;
             parent.swap(oldNode,newNode);
             //transform
-            newNode.setMatrix(oldNode.getMatrix());
-            //childs
-            while(oldNode.listChildren().length != 0){
-                newNode.addChild(oldNode.listChildren()[0])
-                oldNode.removeChild(oldNode.listChildren()[0])
-            }
+            //newNode.setMatrix(oldNode.getMatrix());
+            //childs // Must not be swap!!!
+            // while(oldNode.listChildren().length != 0){
+            //     newNode.addChild(oldNode.listChildren()[0])
+            //     oldNode.removeChild(oldNode.listChildren()[0])
+            // }
         }
         function sortSceneByDeepChildCount(a:Scene, b:Scene) {
-            if (getSceneDepth(a) > getSceneDepth(b)) return -1;
-            if (getSceneDepth(a)  < getSceneDepth(b)) return 1;
+            const SDA = getSceneDepth(a), SDB =  getSceneDepth(b);
+            if (SDA > SDB) return -1;
+            if (SDA < SDB) return 1;
             return 0;
         }
 
@@ -127,10 +131,10 @@ import {exit} from 'process';
                 }
             })
         }
-
         //Order scenes to make duplicates adjacent
         const sortedSceneList = scenelist.sort(sortSceneByDeepChildCount);
         let duplicatedScenes = [];
+
         //Then extract duplicates
         for (let i = 0; i < sortedSceneList.length-1; i++) {
             if(sortedSceneList[i].equals(sortedSceneList[i+1])) {
@@ -145,7 +149,6 @@ import {exit} from 'process';
         if(root.getDefaultScene() || root.getDefaultScene().isDisposed())
             root.setDefaultScene(scenelist[0])
     }
-
 
     await io.write(outputPath, document);
 
