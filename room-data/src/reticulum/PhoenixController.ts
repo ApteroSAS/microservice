@@ -1,5 +1,5 @@
 import * as phx from "phoenix-channels";
-import {Presence} from "@root/phoenix/Presence";
+import {Presence} from "@root/reticulum/Presence";
 import {JWTAuth} from "@root/jwt/JWTAuth";
 import {properties} from "@root/properties/properties";
 

@@ -2,7 +2,7 @@ import {roomDB, RoomDTO} from "@root/mongodb/RoomModel";
 import {properties} from "@root/properties/properties";
 
 
-export default class RoomDataBase {
+export default class RoomDataBaseService {
 
     constructor() {
         this.start();
@@ -63,7 +63,7 @@ export default class RoomDataBase {
         return ret
     }
 
-    async updateRoom(roomSID: string, data: any) {
+    async updateRoomMongo(roomSID: string, data: any) {
         if(properties.MONGODB==="DISABLED") {
             return {} as any;
         }

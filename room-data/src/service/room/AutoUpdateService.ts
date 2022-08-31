@@ -1,6 +1,6 @@
 import {PgRoom} from "@root/postgrest/PgRoom";
-import RoomDataBase from "@root/service/room/RoomDataBase";
-import PhoenixController from "@root/phoenix/PhoenixController";
+import RoomDataBaseService from "@root/mongodb/RoomDataBaseService";
+import PhoenixController from "@root/reticulum/PhoenixController";
 import {properties} from "@root/properties/properties";
 
 export default class AutoUpdateService {
@@ -8,7 +8,7 @@ export default class AutoUpdateService {
     channels = {};
     lastRoomData = {};
 
-    constructor(private pgRoom:PgRoom, private roomDataBase:RoomDataBase,private phoenixController:PhoenixController){
+    constructor(private pgRoom:PgRoom, private roomDataBase:RoomDataBaseService, private phoenixController:PhoenixController){
         if(properties.MONGODB==="DISABLED") {
             return;
         }

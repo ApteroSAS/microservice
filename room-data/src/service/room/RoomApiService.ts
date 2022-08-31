@@ -1,10 +1,11 @@
-import RoomDataBase from "@root/service/room/RoomDataBase";
+import RoomDataBaseService from "@root/mongodb/RoomDataBaseService";
 import {PgRoom} from "@root/postgrest/PgRoom";
 import {JWTAuth} from "@root/jwt/JWTAuth";
-import PhoenixController from "@root/phoenix/PhoenixController";
+import PhoenixController from "@root/reticulum/PhoenixController";
 import AdapterProfileService from "@root/service/room/AdapterProfileService";
 import {properties} from "@root/properties/properties";
 import {PgRoleMenmbership} from "@root/postgrest/PgRoleMenmbership";
+import {RoomService} from "@root/service/room/RoomService";
 
 const express = require('express');
 
@@ -13,7 +14,14 @@ export default class RoomApiService {
     public feathersApp: any = null;
     adapterService = new AdapterProfileService();
 
-    constructor(public roomDB: RoomDataBase, private pgRoom: PgRoom,private pgRoleMenmbership:PgRoleMenmbership, private jwt: JWTAuth, private phoenixController: PhoenixController) {
+    constructor(
+        public roomDB: RoomDataBaseService,
+        private pgRoom: PgRoom,
+        private pgRoleMenmbership:PgRoleMenmbership,
+        private jwt: JWTAuth,
+        private phoenixController: PhoenixController,
+        private roomService: RoomService
+    ) {
     }
 
     mountAPI() {
@@ -64,7 +72,7 @@ export default class RoomApiService {
             }
              */
             let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "aptero"});
-            this.roomDB.updateRoom(payload.hubSID, payload.data).then((room) => {
+            this.roomDB.updateRoomMongo(payload.hubSID, payload.data).then((room) => {
                 res.json(room);
             }).catch((err) => {
                 res.status(500).json(err);
@@ -149,6 +157,34 @@ export default class RoomApiService {
             } catch (err) {
                 res.status(500).json(err);
             }
+        });
+
+        router.get('/room/:sid/clone', (req, res) => {
+            let roomSID = req.params.sid;
+            this.roomService.clone(roomSID).then((room) => {
+                res.json(room);
+            }).catch((err) => {
+                res.status(500).json(err);
+            });
+        });
+
+        router.get('/room/:sid/people', (req, res) => {
+            let roomSID = req.params.sid;
+            this.roomService.people(roomSID).then((room) => {
+                res.json(room);
+            }).catch((err) => {
+                res.status(500).json(err);
+            });
+        });
+
+
+        router.get('/room/:sid/entry', (req, res) => {
+            let roomSID = req.params.sid;
+            this.roomService.entry(roomSID).then((room) => {
+                res.json(room);
+            }).catch((err) => {
+                res.status(500).json(err);
+            });
         });
 
         this.expressApp.use('/', router);
