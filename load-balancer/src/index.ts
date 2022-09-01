@@ -27,7 +27,7 @@ process.on('unhandledRejection', (reason, p) => {
 });
 
 ///////// Start server ////
-let port = 8186;
+let port = 8286;
 expressApp.listen(port, () => {
     let apiService: LoadBalancerApiService = new LoadBalancerApiService(new BalancerAPI(20));
     apiService.start(expressApp);

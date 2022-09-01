@@ -1,5 +1,5 @@
 import {properties} from "@root/properties/properties";
-import * as mongoose from "mongoose";
+import mongoose from "mongoose";
 
 export function startMongoose(){
     const db = properties.MONGODB;

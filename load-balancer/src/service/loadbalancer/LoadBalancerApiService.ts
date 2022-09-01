@@ -1,4 +1,3 @@
-import {balancerDB} from "@root/mongodb/LBModel";
 import {BalancerAPI} from "@root/service/loadbalancer/BalancerAPI";
 
 const express = require('express');
@@ -19,8 +18,8 @@ export default class LoadBalancerApiService {
         });
 
         //Compute redirect url for room
-        router.get('/redirect/url/:url', async (req, res) => {
-            let url = req.params.url;
+        router.get('/redirect', async (req, res) => {
+            let url = req.query.url
             let balancedUrl = await this.balancerApi.computeRedirectUrl(url);
             res.json({url:balancedUrl});
         });

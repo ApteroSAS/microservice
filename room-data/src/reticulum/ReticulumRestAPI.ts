@@ -1,9 +1,10 @@
 import axios from "axios";
-
 export class ReticulumRestAPI{
 
     constructor(private host:string) {
     }
+
+    delayMs = 20;
 
     async createRoom(sceneSid:string,name:string):Promise<{
         "creator_assignment_token": string,
@@ -18,6 +19,7 @@ export class ReticulumRestAPI{
                 "scene_id": sceneSid
             }
         });
+        await new Promise(resolve => setTimeout(resolve,this.delayMs));
         return axiosResponse.data;
     }
 
@@ -27,6 +29,7 @@ export class ReticulumRestAPI{
                 "hub_sid": roomSid
             }
         });
+        await new Promise(resolve => setTimeout(resolve,this.delayMs));
         return axiosResponse.data;
     }
 }

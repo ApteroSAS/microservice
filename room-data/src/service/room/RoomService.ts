@@ -8,7 +8,12 @@ export class RoomService {
     constructor(private pgRoom: PgRoom) {
     }
 
-    async clone(roomSID: string): Promise<{ url: string }> {
+    async clone(roomSID: string): Promise<{
+        "creator_assignment_token": string,
+        "embed_token": string
+        "hub_id": string,
+        "url": string
+    }> {
         let roomMeta1 = await this.reticulumRestAPI.getRoomMeta(roomSID);
         let roomMeta = await this.reticulumRestAPI.createRoom(roomMeta1.scene_id, roomMeta1.name);
         await this.pgRoom.updateRoom(roomMeta.hub_id, {max_occupant_count: "" + roomMeta1.room_size});

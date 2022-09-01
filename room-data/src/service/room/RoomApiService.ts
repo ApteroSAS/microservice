@@ -38,6 +38,7 @@ export default class RoomApiService {
             this.roomDB.findRoom(roomSID).then((room) => {
                 res.json(room);
             }).catch((err) => {
+                console.error(err);
                 res.status(500).json(err);
             });
         });
@@ -75,6 +76,7 @@ export default class RoomApiService {
             this.roomDB.updateRoomMongo(payload.hubSID, payload.data).then((room) => {
                 res.json(room);
             }).catch((err) => {
+                console.error(err);
                 res.status(500).json(err);
             });
         });
@@ -99,6 +101,7 @@ export default class RoomApiService {
                 this.processPgRoomUpdate(payload);
                 res.json(room);
             }).catch((err) => {
+                console.error(err);
                 res.status(500).json(err);
             });
         });
@@ -128,6 +131,7 @@ export default class RoomApiService {
             this.pgRoleMenmbership.updateRoom(dbId,account_id,enable).then((result) => {
                 res.json(result);
             }).catch((err) => {
+                console.error(err);
                 res.status(500).json(err);
             });
         });
@@ -137,6 +141,7 @@ export default class RoomApiService {
             this.roomDB.findRoom(roomSID).then((room) => {
                 res.json(room);
             }).catch((err) => {
+                console.error(err);
                 res.status(500).json(err);
             });
         });
@@ -146,6 +151,7 @@ export default class RoomApiService {
             this.pgRoom.getEmbedToken(roomSID).then((token) => {
                 res.json(token);
             }).catch((err) => {
+                console.error(err);
                 res.status(500).json(err);
             });
         });
@@ -155,6 +161,7 @@ export default class RoomApiService {
             try {
                 res.json(this.adapterService.getProfiles()[aid]);
             } catch (err) {
+                console.error(err);
                 res.status(500).json(err);
             }
         });
@@ -164,6 +171,7 @@ export default class RoomApiService {
             this.roomService.clone(roomSID).then((room) => {
                 res.json(room);
             }).catch((err) => {
+                console.error(err);
                 res.status(500).json(err);
             });
         });
@@ -173,6 +181,7 @@ export default class RoomApiService {
             this.roomService.people(roomSID).then((room) => {
                 res.json(room);
             }).catch((err) => {
+                console.error(err);
                 res.status(500).json(err);
             });
         });
@@ -183,6 +192,7 @@ export default class RoomApiService {
             this.roomService.entry(roomSID).then((room) => {
                 res.json(room);
             }).catch((err) => {
+                console.error(err);
                 res.status(500).json(err);
             });
         });

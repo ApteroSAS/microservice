@@ -1,7 +1,7 @@
 FROM node:14.16
 
-ENV PORT 8186
-EXPOSE 8186
+ENV PORT 8286
+EXPOSE 8286
 
 #COPY ./node_modules ./node_modules
 

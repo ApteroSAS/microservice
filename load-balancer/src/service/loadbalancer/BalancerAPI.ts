@@ -1,5 +1,6 @@
-import {balancerDB, BalancerDTO} from "@root/mongodb/LBModel";
 import {properties} from "@root/properties/properties";
+import {RoomGateway} from "@root/logic/RoomGateway";
+import {LBDataBaseService} from "@root/mongodb/LBDataBaseService";
 
 export class BalancerAPI {
 
@@ -11,10 +12,13 @@ export class BalancerAPI {
     CleanupClones(RoomId)
      */
 
-    constructor(private maxLoad:number) {
+    room = new RoomGateway(properties.ROOM_SERVICE);
+    balancerDataBase = new LBDataBaseService();
+
+    constructor(private maxLoad: number) {
     }
 
-    parseUrl(url):{origin:string,roomSID:string} {
+    parseUrl(url): { origin: string, roomSID: string } {
         //https://alphahub.aptero.co/fTj63Hg/room?msteams=true&embed_token=846d38e7d0bc3c49716f5f5cb2577ff8
         let urlObj = new URL(url);
 
@@ -31,41 +35,30 @@ export class BalancerAPI {
         }
     }
 
-    async getMetasForRoom(roomSID: string): Promise<BalancerDTO> {
-        if (properties.MONGODB === "DISABLED") {
-            throw new Error("Mongo Disabled");
-        }
-        if (roomSID === "" || !roomSID) {
-            throw new Error("wrong id :" + roomSID);
-        }
-        return await balancerDB.findOne({roomSID: roomSID}).exec() as BalancerDTO;
-    }
-
-    async getLoad(roomSID: string):Promise<number>{
+    async getLoad(roomSID: string): Promise<number> {
         //ROOM api to get the number of user in a room
-        return 1
+        return this.room.getUserNumber(roomSID);
     }
 
-    async createClone(roomSID: string):Promise<string>{
-        //room api side find the spoke project
-        //use api to create a room from the project
+    async createClone(roomSID: string): Promise<string> {
         //register url as a clone for this room
-        //return url
-        return "url";
+        let data = await this.room.clone(roomSID);
+        await this.balancerDataBase.addCloneToDb(roomSID,data.hub_id,data.url);
+        return data.url;
     }
 
     async computeRedirectUrl(url: string): Promise<string> {
         let data = this.parseUrl(url);
         let load = await this.getLoad(data.roomSID);
-        if(load<=this.maxLoad){
+        if (load <= this.maxLoad) {
             return url;//nominal case return this url
-        }else{
+        } else {
             //find a suitable clone (aka a clone with a reasonable load)
-            let metasForRoom = await this.getMetasForRoom(data.roomSID);
+            let metasForRoom = await this.balancerDataBase.getMetasForRoom(data.roomSID);
             for (const key in metasForRoom.clones) {
                 let clone = metasForRoom.clones[key];
                 let load = await this.getLoad(key);
-                if(load<=this.maxLoad){
+                if (load <= this.maxLoad) {
                     return clone.url;//url of the clone
                 }
             }

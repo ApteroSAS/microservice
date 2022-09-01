@@ -13,5 +13,6 @@ checkRequiredProperties();
 
 export let properties = {
     MONGODB: process.env.MONGODB ? process.env.MONGODB : "mongodb+srv://dev:sjkPbH1zh78vdKRY@apteromain-h7nsw.mongodb.net/aptero-dev?retryWrites=true",
-    MAX_LOAD: process.env.MAX_LOAD ? process.env.MAX_LOAD : "20",
+    ROOM_SERVICE: process.env.ROOM_SERVICE ? process.env.ROOM_SERVICE : "https://alphahub.aptero.co/service/room/",
+    MAX_LOAD: process.env.MAX_LOAD ? process.env.MAX_LOAD : "24",
 };
