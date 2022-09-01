@@ -3,8 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
+    <script src="properties.js"></script>
 </head>
 <body>
-
+    <script>
+        //WARNING THIS is WIP
+        let host = window.CONFIG.host;
+        let originalURL = new URL(window.location.href);
+        let redirectUrl = new URL(host + originalURL.pathname).toString();
+        fetch(host+"service/lb/redirect?url="+redirectUrl)
+            .then((response) => response.json())
+            .then((data) => {
+                console.log(data);
+                window.location.href = data.url;
+            });
+    </script>
+    <p>
+        Please wait while we are preparing your experience.
+    </p>
 </body>
 </html>
