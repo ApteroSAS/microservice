@@ -1,11 +1,12 @@
 import express from 'express'
+import cors from 'cors'
 import { NodeIO,Node,JSONDocument } from '@gltf-transform/core';
 import { KHRONOS_EXTENSIONS } from '@gltf-transform/extensions';
 import { HubsComponentsExtension} from './hubs_extensions/MOZ_hubs_components'
 
 const app = express()
 app.use(express.json())
-
+app.use(cors())
 app.get('/api/:targetUrl', async (req, res) => {
     const targetUrl:string = req.params.targetUrl;
     const urlRegex:RegExp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;

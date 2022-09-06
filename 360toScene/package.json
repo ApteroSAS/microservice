@@ -13,6 +13,7 @@
   "dependencies": {
     "@gltf-transform/core": "^2.4.1",
     "@gltf-transform/extensions": "^2.4.1",
+    "cors": "^2.8.5",
     "express": "^4.18.1",
     "omi-gltf-transform": "^0.1.0"
   },
