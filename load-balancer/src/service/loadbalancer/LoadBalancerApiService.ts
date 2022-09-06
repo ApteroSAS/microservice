@@ -6,7 +6,7 @@ export default class LoadBalancerApiService {
     public expressApp;
 
 
-    constructor(private balancerApi:BalancerAPI) {
+    constructor(private balancerApi: BalancerAPI) {
     }
 
     mountAPI() {
@@ -19,9 +19,14 @@ export default class LoadBalancerApiService {
 
         //Compute redirect url for room
         router.get('/redirect', async (req, res) => {
-            let url = req.query.url
-            let balancedUrl = await this.balancerApi.computeRedirectUrl(url);
-            res.json({url:balancedUrl});
+            try{
+                let url = req.query.url
+                let data = await this.balancerApi.computeUrlAndInstances(url);
+                res.json(data);
+            }catch (e) {
+                console.error(e);
+                res.json(e);
+            }
         });
 
         this.expressApp.use('/', router);

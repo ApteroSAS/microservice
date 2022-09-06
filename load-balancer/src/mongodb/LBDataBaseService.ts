@@ -1,7 +1,7 @@
 import {balancerDB, BalancerDTO} from "@root/mongodb/LBModel";
 import {properties} from "@root/properties/properties";
 
-export class LBDataBaseService{
+export class LBDataBaseService {
     async getMetasForRoom(roomSID: string): Promise<BalancerDTO> {
         if (properties.MONGODB === "DISABLED") {
             throw new Error("Mongo Disabled");
@@ -12,7 +12,7 @@ export class LBDataBaseService{
         return await balancerDB.findOne({roomSID: roomSID}).exec() as BalancerDTO;
     }
 
-    async addCloneToDb(roomSIDParent: string,cloneSid:string,url:string): Promise<BalancerDTO> {
+    async addCloneToDb(roomSIDParent: string, cloneSid: string, url: string): Promise<BalancerDTO> {
         if (properties.MONGODB === "DISABLED") {
             throw new Error("Mongo Disabled");
         }
@@ -22,7 +22,7 @@ export class LBDataBaseService{
         if (cloneSid === "" || !cloneSid) {
             throw new Error("wrong id :" + cloneSid);
         }
-        let room:BalancerDTO = await this.getMetasForRoom(roomSIDParent);
+        let room: BalancerDTO = await this.getMetasForRoom(roomSIDParent) || {'roomSID': roomSIDParent, clones: {}};
         const query = {'roomSID': roomSIDParent};
         room.clones[cloneSid] = {url}
         return balancerDB.updateOne(query, room, {upsert: true, setDefaultsOnInsert: true}) as any as BalancerDTO;
