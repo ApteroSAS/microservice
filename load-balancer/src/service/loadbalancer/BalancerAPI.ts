@@ -1,6 +1,23 @@
 import {properties} from "@root/properties/properties";
 import {RoomGateway} from "@root/logic/RoomGateway";
 import {LBDataBaseService} from "@root/mongodb/LBDataBaseService";
+import {PromiseQueue} from "@root/service/loadbalancer/PromiseQueue";
+
+const generate = require('project-name-generator');
+
+interface Instances {
+    roomSID: string,
+    clones: {
+        [id: string]: {
+            url: string,
+            name: string,
+            people: number,
+            peopleMax: number,
+            main?: boolean,
+            current: boolean,
+        }
+    },
+}
 
 export class BalancerAPI {
 
@@ -14,6 +31,9 @@ export class BalancerAPI {
 
     room = new RoomGateway(properties.ROOM_SERVICE);
     balancerDataBase = new LBDataBaseService();
+    promises: { [id: string]: PromiseQueue<{ url: string }> } = {};
+    localFastCache = {};//API to get member count is too slow this will be used instead.
+    //ROOM + time Sum the getPeople + Url from the last 40s. Worst case we overSize the room
 
     constructor() {
     }
@@ -35,73 +55,121 @@ export class BalancerAPI {
         }
     }
 
-    async getLoad(roomSID: string): Promise<number> {
-        //ROOM api to get the number of user in a room
-        return this.room.getUserNumber(roomSID);
+    async remove(url: string): Promise<boolean> {
+        let {roomSID} = this.parseUrl(url);
+        return true;
     }
 
-    async getMetaForRoom(roomSID: string, maxLoad: number): Promise<{
-        roomSID: string,
-        clones: {
-            [id: string]: {
-                url: string,
-                people: number,
-                peopleMax: number,
-            }
-        },
-    }> {
-        let instances = await this.balancerDataBase.getMetasForRoom(roomSID) || {roomSID: roomSID, clones: {}};
-
+    async getMetaForRoom(url: string): Promise<Instances> {
+        let {roomSID} = this.parseUrl(url);
+        let instances: Instances = await this.balancerDataBase.getMetasForRoom(roomSID) || {
+            roomSID,
+            clones: {}
+        } as any;
+        const mainRoomSid = instances.roomSID;
         for (const clonesKey in instances.clones) {
-            (instances.clones[clonesKey] as any).people = this.getLoad(clonesKey);
-            (instances.clones[clonesKey] as any).peopleMax = maxLoad;
+            let data = await this.room.getRoomEntry(clonesKey);
+            instances.clones[clonesKey].url= url.replace(roomSID, clonesKey);
+            instances.clones[clonesKey].people = data.member_count + data.lobby_count;//no need for fast cache here since it is just for information
+            instances.clones[clonesKey].peopleMax = data.room_size;
+            instances.clones[clonesKey].current = clonesKey === roomSID;
         }
-        return instances as any;
+        {
+            let mainEntry = await this.room.getRoomEntry(mainRoomSid);
+            instances.clones[mainRoomSid] = {
+                url: url.replace(roomSID, mainRoomSid),
+                name: "Default",
+                people: mainEntry.member_count + mainEntry.lobby_count,//no need for fast cache here since it is just for information
+                peopleMax:mainEntry.room_size,
+                main: true,
+                current: mainRoomSid === roomSID
+            }
+        }
+        return instances;
     }
 
     async createClone(roomSID: string): Promise<string> {
         //register url as a clone for this room
         let data = await this.room.clone(roomSID);
-        await this.balancerDataBase.addCloneToDb(roomSID, data.hub_id, data.url);
+        let name = generate().dashed;
+        await this.balancerDataBase.addCloneToDb(roomSID, data.hub_id, name);
         return data.url;
     }
 
-    async computeUrlAndInstances(urlIn: string): Promise<{
-        url: string, instances: {
-            roomSID: string,
-            clones: {
-                [id: string]: {
-                    url: string,
-                    people: number,
-                    peopleMax: number,
-                }
-            },
-        }
+    async computeUrl(urlIn: string): Promise<{
+        url: string
     }> {
-        let data = this.parseUrl(urlIn);
-        let roomEntry = await this.room.getRoomEntry(data.roomSID);
-        let maxLoad = roomEntry.room_size;
-        let load = roomEntry.member_count + roomEntry.lobby_count;
-        let url = urlIn;//nominal case return this url
-        if (load > maxLoad) {
-            url = await this.computeRedirectUrl(data.roomSID, maxLoad, load);
+        let {roomSID} = this.parseUrl(urlIn);
+        console.log("computeUrl on : " + roomSID);
+        let instances: Instances = await this.balancerDataBase.getMetasForRoom(roomSID) || {
+            roomSID,
+            clones: {}
+        } as any;
+        if(!instances.roomSID){
+            throw new Error("invalid data from DB");
         }
-        let instances = await this.getMetaForRoom(data.roomSID, maxLoad);
-        return {url, instances}
+        const mainRoomSid = instances.roomSID;
+        if (!this.promises[mainRoomSid]) {
+            this.promises[mainRoomSid] = new PromiseQueue<{ url: string }>();
+        }
+        //makes the user enter one at a time ensure the DB is updated and we have the right value for getRoomEntry
+        return await this.promises[mainRoomSid].add(async () => {
+            console.log("Request for balancing on : " + urlIn);
+            let roomEntry = await this.room.getRoomEntry(roomSID);
+            let maxLoad = roomEntry.room_size;
+            let load = this.getPeopleCountWithFastCache(roomEntry);
+            if (load >= maxLoad) {
+                console.log("Try assigning to new room : " + load + "/" + maxLoad);
+                const url = await this.computeRedirectUrl(roomSID, maxLoad, urlIn);
+                this.notifyFastCache(url);
+                return {url}
+            } else {
+                console.log("Accept current room : " + load + "/" + maxLoad + " : " + urlIn);
+                this.notifyFastCache(urlIn);
+                return {url: urlIn}//nominal case return this url
+            }
+        }).promise;
     }
 
-    async computeRedirectUrl(roomSID: string, maxLoad: number, load: number): Promise<string> {
+    getPeopleCountWithFastCache(roomEntry:{id:string,member_count:number,lobby_count:number}):number{
+        let ret = roomEntry.member_count + roomEntry.lobby_count;
+        let time = performance.now();
+        const delayMs = 30*1000;
+        for (const localFastCacheKey in this.localFastCache) {
+            if(+localFastCacheKey<(time-delayMs)){
+                delete this.localFastCache[localFastCacheKey];
+            }
+        }
+        for (const localFastCacheKey in this.localFastCache) {
+            const entry = this.localFastCache[localFastCacheKey];
+            if(entry === roomEntry.id){
+                ret++;
+            }
+        }
+        return ret;
+    }
+
+    notifyFastCache(url:string){
+        let {roomSID} = this.parseUrl(url);
+        this.localFastCache[performance.now()] = roomSID;
+    }
+
+    async computeRedirectUrl(roomSID: string, maxLoad: number, urlIn: string): Promise<string> {
         //find a suitable clone (aka a clone with a reasonable load)
-        let metasForRoom = await this.balancerDataBase.getMetasForRoom(roomSID)|| {roomSID: roomSID, clones: {}};
+        let metasForRoom = await this.balancerDataBase.getMetasForRoom(roomSID) || {roomSID: roomSID, clones: {}};
         for (const key in metasForRoom.clones) {
-            let clone = metasForRoom.clones[key];
-            let load = await this.getLoad(key);
-            if (load <= maxLoad) {
-                return clone.url;//url of the clone
+            let roomEntry = await this.room.getRoomEntry(key);
+            let load = this.getPeopleCountWithFastCache(roomEntry);
+            if (load < maxLoad) {
+                let url = urlIn.replace(roomSID, key);//url of the clone with the right origine
+                console.log("Assigning to new room : " + load + "/" + maxLoad + " : " + url);
+                return url;
             }
         }
         //at this point if no clone found create one
-        return await this.createClone(roomSID);//new url
+        let room = await this.createClone(roomSID);//new url
+        console.log("Creating a new room : " + room);
+        return room;
     }
 
 }

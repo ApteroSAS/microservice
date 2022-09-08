@@ -2,18 +2,18 @@ import mongoose from "mongoose";
 
 const Schema = mongoose.Schema;
 
-export interface BalancerDTO{
-    roomSID:string,
-    clones:{[id:string]: { url:string }},
+export interface BalancerDTO {
+    roomSID: string,
+    clones: { [id: string]: { name: string } },
 }
 
 const BalancerSchema = new Schema({
-    roomSID:{
+    roomSID: {
         type: String,
         required: true,
-        unique : true
+        unique: true
     },
-    clones:{
+    clones: {
         type: Object
     },
 });

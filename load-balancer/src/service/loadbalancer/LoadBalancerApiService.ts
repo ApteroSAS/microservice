@@ -20,8 +20,30 @@ export default class LoadBalancerApiService {
         //Compute redirect url for room
         router.get('/redirect', async (req, res) => {
             try{
-                let url = req.query.url
-                let data = await this.balancerApi.computeUrlAndInstances(url);
+                let url = decodeURIComponent(req.query.url);
+                let data = await this.balancerApi.computeUrl(url);
+                res.json(data);
+            }catch (e) {
+                console.error(e);
+                res.json(e);
+            }
+        });
+
+        router.get('/remove', async (req, res) => {
+            try{
+                let url = decodeURIComponent(req.query.url);
+                let data = await this.balancerApi.remove(url);
+                res.json(data);
+            }catch (e) {
+                console.error(e);
+                res.json(e);
+            }
+        });
+
+        router.get('/meta', async (req, res) => {
+            try{
+                let url = decodeURIComponent(req.query.url);
+                let data = await this.balancerApi.getMetaForRoom(url);
                 res.json(data);
             }catch (e) {
                 console.error(e);
