@@ -29,7 +29,7 @@ process.on('unhandledRejection', (reason, p) => {
 ///////// Start server ////
 let port = 8286;
 expressApp.listen(port, () => {
-    let apiService: LoadBalancerApiService = new LoadBalancerApiService(new BalancerAPI(20));
+    let apiService: LoadBalancerApiService = new LoadBalancerApiService(new BalancerAPI());
     apiService.start(expressApp);
     new WebServer(expressApp);
     console.log('Listening on ' + port);

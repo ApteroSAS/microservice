@@ -15,7 +15,7 @@ export class BalancerAPI {
     room = new RoomGateway(properties.ROOM_SERVICE);
     balancerDataBase = new LBDataBaseService();
 
-    constructor(private maxLoad: number) {
+    constructor() {
     }
 
     parseUrl(url): { origin: string, roomSID: string } {
@@ -40,31 +40,68 @@ export class BalancerAPI {
         return this.room.getUserNumber(roomSID);
     }
 
+    async getMetaForRoom(roomSID: string, maxLoad: number): Promise<{
+        roomSID: string,
+        clones: {
+            [id: string]: {
+                url: string,
+                people: number,
+                peopleMax: number,
+            }
+        },
+    }> {
+        let instances = await this.balancerDataBase.getMetasForRoom(roomSID) || {roomSID: roomSID, clones: {}};
+
+        for (const clonesKey in instances.clones) {
+            (instances.clones[clonesKey] as any).people = this.getLoad(clonesKey);
+            (instances.clones[clonesKey] as any).peopleMax = maxLoad;
+        }
+        return instances as any;
+    }
+
     async createClone(roomSID: string): Promise<string> {
         //register url as a clone for this room
         let data = await this.room.clone(roomSID);
-        await this.balancerDataBase.addCloneToDb(roomSID,data.hub_id,data.url);
+        await this.balancerDataBase.addCloneToDb(roomSID, data.hub_id, data.url);
         return data.url;
     }
 
-    async computeRedirectUrl(url: string): Promise<string> {
-        let data = this.parseUrl(url);
-        let load = await this.getLoad(data.roomSID);
-        if (load <= this.maxLoad) {
-            return url;//nominal case return this url
-        } else {
-            //find a suitable clone (aka a clone with a reasonable load)
-            let metasForRoom = await this.balancerDataBase.getMetasForRoom(data.roomSID);
-            for (const key in metasForRoom.clones) {
-                let clone = metasForRoom.clones[key];
-                let load = await this.getLoad(key);
-                if (load <= this.maxLoad) {
-                    return clone.url;//url of the clone
+    async computeUrlAndInstances(urlIn: string): Promise<{
+        url: string, instances: {
+            roomSID: string,
+            clones: {
+                [id: string]: {
+                    url: string,
+                    people: number,
+                    peopleMax: number,
                 }
-            }
-            //at this point if no clone found create one
-            return await this.createClone(data.roomSID);//new url
+            },
         }
+    }> {
+        let data = this.parseUrl(urlIn);
+        let roomEntry = await this.room.getRoomEntry(data.roomSID);
+        let maxLoad = roomEntry.room_size;
+        let load = roomEntry.member_count + roomEntry.lobby_count;
+        let url = urlIn;//nominal case return this url
+        if (load > maxLoad) {
+            url = await this.computeRedirectUrl(data.roomSID, maxLoad, load);
+        }
+        let instances = await this.getMetaForRoom(data.roomSID, maxLoad);
+        return {url, instances}
+    }
+
+    async computeRedirectUrl(roomSID: string, maxLoad: number, load: number): Promise<string> {
+        //find a suitable clone (aka a clone with a reasonable load)
+        let metasForRoom = await this.balancerDataBase.getMetasForRoom(roomSID)|| {roomSID: roomSID, clones: {}};
+        for (const key in metasForRoom.clones) {
+            let clone = metasForRoom.clones[key];
+            let load = await this.getLoad(key);
+            if (load <= maxLoad) {
+                return clone.url;//url of the clone
+            }
+        }
+        //at this point if no clone found create one
+        return await this.createClone(roomSID);//new url
     }
 
 }
