@@ -17,6 +17,7 @@ app.use(express.json())
 app.use(cors())
 app.get('/api/:targetUrl', async (req, res) => {
     const targetUrl:string = req.params.targetUrl;
+    console.log("ping for " + targetUrl)
     const urlRegex:RegExp = /(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/;
     const io:NodeIO = await new NodeIO().registerExtensions([...KHRONOS_EXTENSIONS, HubsComponentsExtension])
         .registerDependencies({
@@ -37,8 +38,6 @@ app.get('/api/:targetUrl', async (req, res) => {
                 ]
         });
     const jsondocument:JSONDocument = await io.readAsJSON('./assets/defaultScene.glb');
-    // @ts-ignore
-    console.log(jsondocument.json.nodes[9].extensions.MOZ_hubs_components.image)
     // @ts-ignore
     const finalUrl = (urlRegex.test(targetUrl))? targetUrl : jsondocument.json.nodes[9].extensions.MOZ_hubs_components.image.src;
     // @ts-ignore

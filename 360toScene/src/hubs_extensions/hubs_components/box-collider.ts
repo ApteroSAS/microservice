@@ -31,9 +31,9 @@ export class HubsBoxColliderComponent extends ExtensionProperty<IBC> {
     }
 
     read(context, componentDef) {
-        if (componentDef.position) this.set("position", componentDef.src);
-        if (componentDef.rotation) this.set("rotation", componentDef.controls);
-        if (componentDef.scale) this.set("scale", componentDef.autoPlay);
+        if (componentDef.position) this.set("position", componentDef.position);
+        if (componentDef.rotation) this.set("rotation", componentDef.rotation);
+        if (componentDef.scale) this.set("scale", componentDef.scale);
         return this;
     }
 
