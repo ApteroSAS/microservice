@@ -38,7 +38,9 @@ app.get('/api/:targetUrl', async (req, res) => {
         });
     const jsondocument:JSONDocument = await io.readAsJSON('./assets/defaultScene.glb');
     // @ts-ignore
-    const finalUrl = (urlRegex.test(targetUrl))? targetUrl : jsondocument.json.nodes[9].extensions.MOZ_hubs_components.image.src;;
+    console.log(jsondocument.json.nodes[9].extensions.MOZ_hubs_components.image)
+    // @ts-ignore
+    const finalUrl = (urlRegex.test(targetUrl))? targetUrl : jsondocument.json.nodes[9].extensions.MOZ_hubs_components.image.src;
     // @ts-ignore
     jsondocument.json.nodes[9].extensions.MOZ_hubs_components.image.src = finalUrl;
     const glbBuffer = Buffer.from(await io.writeBinary(await io.readJSON(jsondocument)));

@@ -28,7 +28,7 @@ export default class LoadTesterRestService {
                 const headed = data.headed?"--headed ":"";
                 const worker = data.workers? data.workers : 1;
                 const quantity = Math.ceil(data.quantity/worker);
-                if(quantity<3){
+                if(quantity<=1){
                     throw new Error("At least 3 client per worker");
                 }
                 this.children[data.id]= [];
@@ -48,7 +48,8 @@ export default class LoadTesterRestService {
                 }
                 res.json(data);
             } catch (e) {
-                res.json(e);
+                console.error(e);
+                res.json(e.toString());
             }
         });
 

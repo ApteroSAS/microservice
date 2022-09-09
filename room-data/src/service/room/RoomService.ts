@@ -16,7 +16,7 @@ export class RoomService {
     }> {
         let roomMeta1 = await this.reticulumRestAPI.getRoomMeta(roomSID);
         let roomMeta = await this.reticulumRestAPI.createRoom(roomMeta1.scene_id, roomMeta1.name);
-        await this.pgRoom.updateRoom(roomMeta.hub_id, {max_occupant_count: "" + roomMeta1.room_size});
+        await this.pgRoom.updateRoom(roomMeta.hub_id, {room_size: "" + roomMeta1.room_size});
         return roomMeta;
     }
 
