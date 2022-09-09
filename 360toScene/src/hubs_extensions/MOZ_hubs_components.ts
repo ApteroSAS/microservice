@@ -103,13 +103,12 @@ export class HubsComponentsExtension extends Extension {
     if (!extension) {
       return;
     }
-
     let hubsComponents;
 
     for (const componentName in extension) {
       const componentClass = this._registeredHubsComponents.get(componentName);
-
       if (!componentClass) {
+        console.log("Missing " + componentName + ". please register it as in https://github.com/omigroup/omi-gltf-transform/tree/main/src/extensions/hubs-components")
         continue;
       }
 
@@ -117,7 +116,8 @@ export class HubsComponentsExtension extends Extension {
         hubsComponents = this.createHubsComponents();
       }
 
-      const component = new componentClass().read(
+      const component = new componentClass(this.document.getGraph());
+      component.read(
         context,
         extension[componentName]
       );
@@ -161,10 +161,12 @@ export class HubsComponentsExtension extends Extension {
   _writeProperty(context, propertyDef, object) {
     const extension = object.getExtension(MOZ_HUBS_COMPONENTS);
 
+   // console.log("writing node" + object.getName())
     if (!extension) {
       return;
     }
 
+   // console.log("that has extension")
     const hubsComponents = extension.getComponents();
 
     if (hubsComponents.length === 0) {
