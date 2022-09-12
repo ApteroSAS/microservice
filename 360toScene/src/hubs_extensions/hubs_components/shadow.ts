@@ -29,8 +29,8 @@ export class HubsShadowComponent extends ExtensionProperty<IShadow> {
     }
 
     read(context, componentDef) {
-        if (componentDef.cast) this.set("cast", componentDef.cast);
-        if (componentDef.receive) this.set("receive", componentDef.receive);
+        if (componentDef.cast !=undefined) this.set("cast", componentDef.cast);
+        if (componentDef.receive !=undefined) this.set("receive", componentDef.receive);
        return this;
     }
 

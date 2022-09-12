@@ -37,7 +37,7 @@ app.get('/api/:targetUrl', async (req, res) => {
                 HubsScenePreviewCameraComponent
                 ]
         });
-    const jsondocument:JSONDocument = await io.readAsJSON('./assets/defaultScene.glb');
+    const jsondocument:JSONDocument = await io.readAsJSON('./assets/defaultScene2.glb');
     // @ts-ignore
     const finalUrl = (urlRegex.test(targetUrl))? targetUrl : jsondocument.json.nodes[9].extensions.MOZ_hubs_components.image.src;
     // @ts-ignore

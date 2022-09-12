@@ -27,13 +27,14 @@ export class HubsVisibleComponent extends ExtensionProperty<Ivisible> {
     }
 
     read(context, componentDef) {
-        if (componentDef.visible) this.set("visible", componentDef.visible);
+        if (componentDef.visible != undefined) this.set("visible", componentDef.visible);
+        console.log(this.get("visible"))
        return this;
     }
 
     write(context) {
         return {
-            visible: this.get("visible")?"true":"false",
+            visible: this.get("visible"),
         };
     }
 }

@@ -34,7 +34,7 @@ export class HubsImageComponent extends ExtensionProperty<IImage> {
 
     read(context, componentDef) {
         if (componentDef.src) this.set("src", componentDef.src);
-        if (componentDef.controls) this.set("controls", componentDef.controls);
+        if (componentDef.controls != undefined) this.set("controls", componentDef.controls);
         if (componentDef.alphaMode) this.set("alphaMode", componentDef.alphaMode);
         if (componentDef.projection) this.set("projection", componentDef.projection);
         return this;
