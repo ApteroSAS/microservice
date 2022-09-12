@@ -3,7 +3,15 @@ import {RoomGateway} from "@root/logic/RoomGateway";
 import {LBDataBaseService} from "@root/mongodb/LBDataBaseService";
 import {PromiseQueue} from "@root/service/loadbalancer/PromiseQueue";
 
-const generate = require('project-name-generator');
+const {uniqueNamesGenerator, colors, animals} = require('unique-names-generator');
+const newName = () => {
+    return uniqueNamesGenerator({
+        dictionaries: [colors, animals],
+        separator: '-'
+    });
+}
+
+console.log(newName())
 
 interface Instances {
     roomSID: string,
@@ -69,7 +77,7 @@ export class BalancerAPI {
         const mainRoomSid = instances.roomSID;
         for (const clonesKey in instances.clones) {
             let data = await this.room.getRoomEntry(clonesKey);
-            instances.clones[clonesKey].url= url.replace(roomSID, clonesKey);
+            instances.clones[clonesKey].url = url.replace(roomSID, clonesKey);
             instances.clones[clonesKey].people = data.member_count + data.lobby_count;//no need for fast cache here since it is just for information
             instances.clones[clonesKey].peopleMax = data.room_size;
             instances.clones[clonesKey].current = clonesKey === roomSID;
@@ -80,7 +88,7 @@ export class BalancerAPI {
                 url: url.replace(roomSID, mainRoomSid),
                 name: "Default",
                 people: mainEntry.member_count + mainEntry.lobby_count,//no need for fast cache here since it is just for information
-                peopleMax:mainEntry.room_size,
+                peopleMax: mainEntry.room_size,
                 main: true,
                 current: mainRoomSid === roomSID
             }
@@ -91,7 +99,7 @@ export class BalancerAPI {
     async createClone(roomSID: string): Promise<string> {
         //register url as a clone for this room
         let data = await this.room.clone(roomSID);
-        let name = generate().dashed;
+        let name = newName();
         await this.balancerDataBase.addCloneToDb(roomSID, data.hub_id, name);
         return data.url;
     }
@@ -105,7 +113,7 @@ export class BalancerAPI {
             roomSID,
             clones: {}
         } as any;
-        if(!instances.roomSID){
+        if (!instances.roomSID) {
             throw new Error("invalid data from DB");
         }
         const mainRoomSid = instances.roomSID;
@@ -131,25 +139,25 @@ export class BalancerAPI {
         }).promise;
     }
 
-    getPeopleCountWithFastCache(roomEntry:{id:string,member_count:number,lobby_count:number}):number{
+    getPeopleCountWithFastCache(roomEntry: { id: string, member_count: number, lobby_count: number }): number {
         let ret = roomEntry.member_count + roomEntry.lobby_count;
         let time = performance.now();
-        const delayMs = 30*1000;
+        const delayMs = 30 * 1000;
         for (const localFastCacheKey in this.localFastCache) {
-            if(+localFastCacheKey<(time-delayMs)){
+            if (+localFastCacheKey < (time - delayMs)) {
                 delete this.localFastCache[localFastCacheKey];
             }
         }
         for (const localFastCacheKey in this.localFastCache) {
             const entry = this.localFastCache[localFastCacheKey];
-            if(entry === roomEntry.id){
+            if (entry === roomEntry.id) {
                 ret++;
             }
         }
         return ret;
     }
 
-    notifyFastCache(url:string){
+    notifyFastCache(url: string) {
         let {roomSID} = this.parseUrl(url);
         this.localFastCache[performance.now()] = roomSID;
     }

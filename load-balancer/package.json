@@ -27,7 +27,7 @@
     "module-alias": "^2.2.2",
     "mongodb": "^4.9.0",
     "mongoose": "^6.5.3",
-    "project-name-generator": "^2.1.9"
+    "unique-names-generator": "^4.7.1"
   },
   "devDependencies": {
     "@types/mocha": "9.1.1",
