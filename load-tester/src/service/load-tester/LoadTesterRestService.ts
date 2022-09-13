@@ -26,15 +26,17 @@ export default class LoadTesterRestService {
             try {
                 //https://playwright.dev/docs/test-parallel
                 const headed = data.headed?"--headed ":"";
-                const worker = data.workers? data.workers : 1;
-                const quantity = Math.ceil(data.quantity/worker);
+                const worker = data.workers? data.workers : Math.floor(data.quantity/4);//default to 4 pages per worker
+                const quantity = Math.floor(data.quantity/worker);
+                const additionalqty = data.quantity%worker;
                 if(quantity<=1){
                     throw new Error("At least 3 client per worker");
                 }
                 this.children[data.id]= [];
                 for (let i = 0; i < worker; i++) {
                     new Promise((resolve, reject) => {
-                        let cmd = `cross-env url="${data.url}" quantity="${quantity}" waitMinute="${data.waitMinute}" playwright test ${headed} ${data.type}`;
+                        const actualqty = quantity + (i==0?additionalqty:0);
+                        let cmd = `cross-env url="${data.url}" quantity="${actualqty}" waitMinute="${data.waitMinute}" playwright test ${headed} ${data.type}`;
                         console.log(cmd);
                         let childProcess = exec(cmd, (error, stdout, stderr) => {
                             if (error) {
