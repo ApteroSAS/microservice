@@ -42,6 +42,7 @@ export class BalancerAPI {
     promises: { [id: string]: PromiseQueue<{ url: string }> } = {};
     localFastCache = {};//API to get member count is too slow this will be used instead.
     //ROOM + time Sum the getPeople + Url from the last 40s. Worst case we overSize the room
+    private delayMs: number = 15*1000;
 
     constructor() {
     }
@@ -129,7 +130,9 @@ export class BalancerAPI {
             if (load >= maxLoad) {
                 console.log("Try assigning to new room : " + load + "/" + maxLoad);
                 const url = await this.computeRedirectUrl(roomSID, maxLoad, urlIn);
-                this.notifyFastCache(url);
+                //this.notifyFastCache(url);
+                // no need to notify in this case since once we will reload the page the api will be trigger once
+                // again this time hopefully accepting the room url and notifiying the fast cache
                 return {url}
             } else {
                 console.log("Accept current room : " + load + "/" + maxLoad + " : " + urlIn);
@@ -142,9 +145,8 @@ export class BalancerAPI {
     getPeopleCountWithFastCache(roomEntry: { id: string, member_count: number, lobby_count: number }): number {
         let ret = roomEntry.member_count + roomEntry.lobby_count;
         let time = performance.now();
-        const delayMs = 30 * 1000;
         for (const localFastCacheKey in this.localFastCache) {
-            if (+localFastCacheKey < (time - delayMs)) {
+            if (+localFastCacheKey < (time - this.delayMs)) {
                 delete this.localFastCache[localFastCacheKey];
             }
         }
