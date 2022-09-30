@@ -10,6 +10,7 @@ let express = require('@feathersjs/express');//let express = require('express');
 import mongoose from "mongoose";
 import UserDataBase from "@root/service/users/UserDataBase";
 import UserApiService from "@root/service/users/UserApiService";
+import {WebServer} from "@root/service/WebServer";
 
 export const BUILD_VERSION = "1.2.0";
 console.log(BUILD_VERSION);
@@ -56,5 +57,6 @@ expressApp.listen(port, () => {
     let db = new UserDataBase();
     let apiService: UserApiService = new UserApiService(db);
     apiService.start(expressApp);
+    new WebServer(expressApp);
     console.log('Listening on '+port);
 });

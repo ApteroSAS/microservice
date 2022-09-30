@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Hugo 0.101.0">
+    <title>User Admin</title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.2/examples/sign-in/">
+    <link href="bootstrap-5.2.1-dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="signin.css" rel="stylesheet">
+
+    <script>
+        window.post = function(url, data) {
+            return fetch(url, {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+        }
+        async function processEntry(email){
+            alert(email);
+            let data = (await post("approve", {TOKEN: localStorage.getItem("TOKEN"),email}));
+            await data.json();
+            window.location.reload();
+        }
+
+        async function fetchList(){
+            let data = (await post("list", {TOKEN: localStorage.getItem("TOKEN")}));
+            if(data.status===200){
+                data = await data.json();
+                console.log(data);
+                window.list = data;
+                let ul = document.getElementById("data-list");
+                for (const dataKey in data) {
+                    const entry = data[dataKey];
+                    var li = document.createElement("li");
+                    li.className = "list-group-item";
+                    let text1 = document.createElement("strong");
+                    text1.textContent = dataKey
+                    text1.className = "mb-1"
+
+                    let text2 = document.createElement("div");
+                    text2.textContent = entry.date
+
+                    var button = document.createElement("button");
+                    button.setAttribute("class" , "w-100 btn btn-primary");
+                    button.setAttribute("onclick" , "processEntry(\""+dataKey+"\")");
+                    button.textContent = "Approve";
+
+                    li.appendChild(text1);
+                    li.appendChild(text2);
+                    li.appendChild(button);
+                    ul.appendChild(li);
+                }
+            }
+        }
+        fetchList();
+    </script>
+</head>
+<body class="text-center">
+
+<main id="phase-1" class="form-signin m-auto" style="max-width:800px;" >
+    <h1>Pending Login Request click to approve</h1>
+    <div>Before approving a user must login with an email address using the signin form directly on the device</div>
+    <br/>
+    <br/>
+    <br/>
+    <ul class="list-group" id="data-list">
+        <!--<li class="list-group-item">An item <button class="w-100 btn btn-lg btn-primary" onclick="fetchList()"> Approve</button> </li>-->
+    </ul>
+</main>
+
+</body>
+</html>

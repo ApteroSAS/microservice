@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Hugo 0.101.0">
+    <title>User Admin</title>
+
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.2/examples/sign-in/">
+    <link href="bootstrap-5.2.1-dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="signin.css" rel="stylesheet">
+
+    <script>
+        window.post = function(url, data) {
+            return fetch(url, {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+        }
+
+        async function fetchList(){
+            if(document.getElementById("floatingInput").value === "admin") {
+                const data = await post("list", {TOKEN: document.getElementById("floatingPassword").value});
+                if(data.status===200){
+                    localStorage.setItem('TOKEN', document.getElementById("floatingPassword").value);
+                    window.location.href="list.html"
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-center">
+
+<main id="phase-1" class="form-signin w-100 m-auto" style="visibility:visible">
+    <form>
+        <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+
+        <div class="form-floating">
+            <input type="text" class="form-control" id="floatingInput" placeholder="admin">
+            <label for="floatingInput">Username</label>
+        </div>
+        <div class="form-floating">
+            <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+            <label for="floatingPassword">Password</label>
+        </div>
+
+        <!--<div class="checkbox mb-3">
+            <label>
+                <input type="checkbox" value="remember-me"> Remember me
+            </label>
+        </div>-->
+        <!--<p class="mt-5 mb-3 text-muted">&copy; Aptero – 2022</p>-->
+    </form>
+    <button class="w-100 btn btn-lg btn-primary" onclick="fetchList()" >Sign in</button>
+</main>
+
+</body>
+</html>

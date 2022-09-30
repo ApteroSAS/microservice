@@ -7,6 +7,7 @@ const axios = require('axios');
 export default class UserApiService {
     public expressApp;
     public feathersApp: any = null;
+    userDataCache={ };
 
     constructor(public userdb:UserDataBase) {
     }
@@ -48,6 +49,7 @@ export default class UserApiService {
             let profile=json.profile;
             if(mail) {
                 if(signinurl && mail){
+                    this.userDataCache[mail] = {...this.userDataCache[mail], ...json,date:new Date().toISOString()};
                     const msg = " Merci d'utiliser Aptero! \n" +
                         " Afin de vous connecter, veuillez suivre le lien suivant. \n" +
                         " %link% \n" +
@@ -92,13 +94,15 @@ export default class UserApiService {
                         '<a href="%link%">Click here to connect</a><br/>' +
                         " If you did not make this request, please ignore this e-mail.<br/>" +
                         "</body></html>";
-                    axios.post(properties.MAIL_SERVICE+"/mail",{
-                        to: mail,
-                        from: "admin@aptero.co",
-                        subject: "Sign-in to Aptero",
-                        text: msg.replace("%link%",signinurl).replace("%link%",signinurl),
-                        html: msgHtml.replace("%link%",signinurl).replace("%link%",signinurl),
-                    })
+                    if(properties.MAIL_SERVICE!=="DISABLED") {
+                        axios.post(properties.MAIL_SERVICE + "/mail", {
+                            to: mail,
+                            from: "admin@aptero.co",
+                            subject: "Sign-in to Aptero",
+                            text: msg.replace("%link%", signinurl).replace("%link%", signinurl),
+                            html: msgHtml.replace("%link%", signinurl).replace("%link%", signinurl),
+                        })
+                    }
                 }
                 this.userdb.updateUser(accountId, mail, signinurl,profile).then((user) => {
                     res.json(user);
@@ -111,6 +115,29 @@ export default class UserApiService {
                 res.status(500).json("no user id or email");
             }
         });
+
+
+        router.post('/list', (req, res) => {
+            let json = req.body;
+            if(json.TOKEN!==properties.ADMIN_TOKEN){
+                res.status(500).json("Invalid Token");
+            }else {
+                res.json(this.userDataCache);
+            }
+        });
+
+        router.post('/approve', async (req, res) => {
+            let json = req.body;
+            if(json.TOKEN!==properties.ADMIN_TOKEN){
+                res.status(500).json("Invalid Token");
+            }else {
+                let entry = this.userDataCache[json.email]
+                await axios.get(entry.signinurl);
+                delete this.userDataCache[json.email];
+                res.json(this.userDataCache);
+            }
+        });
+
         this.expressApp.use('/', router);
     }
 
