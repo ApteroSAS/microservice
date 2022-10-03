@@ -1,4 +1,4 @@
-FROM node:14.16
+FROM node:16.17
 
 ENV PORT 8086
 EXPOSE 8086
@@ -6,12 +6,12 @@ EXPOSE 8086
 #COPY ./node_modules ./node_modules
 
 COPY ./package.json ./package.json
-COPY ./package-lock.json ./package-lock.json
-COPY ./tsconfig.json ./tsconfig.json
-RUN npm install
+#COPY ./package-lock.json ./package-lock.json
+COPY ./yarn.lock ./yarn.lock
+RUN yarn install
 
-COPY ./src ./src
-RUN npm run build
+COPY . .
+RUN yarn run build
 
 #RUN npm run test
 

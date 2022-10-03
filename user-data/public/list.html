@@ -19,10 +19,10 @@
             return fetch(url, {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
         }
         async function processEntry(email){
-            alert(email);
             let data = (await post("approve", {TOKEN: localStorage.getItem("TOKEN"),email}));
             await data.json();
-            window.location.reload();
+            window.location.href = window.list[email].signinurl;
+            //window.location.reload();
         }
 
         async function fetchList(){

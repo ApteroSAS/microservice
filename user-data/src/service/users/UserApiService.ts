@@ -1,4 +1,4 @@
-import { properties } from "@root/properties/properties";
+import {properties} from "@root/properties/properties";
 import UserDataBase from "@root/service/users/UserDataBase";
 
 const express = require('express');
@@ -6,10 +6,18 @@ const axios = require('axios');
 
 export default class UserApiService {
     public expressApp;
-    public feathersApp: any = null;
-    userDataCache={ };
+    userDataCache: {
+        [id: string]: {
+            accountId: string,
+            mail: string,
+            signinurl: string,
+            name: string,
+            profile: string,
+            date: string
+        }
+    } = {};
 
-    constructor(public userdb:UserDataBase) {
+    constructor(public userdb: UserDataBase) {
     }
 
     mountAPI() {
@@ -41,15 +49,15 @@ export default class UserApiService {
 
         router.post('/update/user', (req, res) => {
             let json = req.body;
-            console.log("URL received '/update/user'",json);
+            console.log("URL received '/update/user'", json);
             let accountId = json.accountId;
             let mail = json.mail;
             let signinurl = json.signinurl;
             let name = json.name;
-            let profile=json.profile;
-            if(mail) {
-                if(signinurl && mail){
-                    this.userDataCache[mail] = {...this.userDataCache[mail], ...json,date:new Date().toISOString()};
+            let profile = json.profile;
+            if (mail) {
+                if (signinurl && mail) {
+                    this.userDataCache[mail] = {...this.userDataCache[mail], ...json, date: new Date().toISOString()};
                     const msg = " Merci d'utiliser Aptero! \n" +
                         " Afin de vous connecter, veuillez suivre le lien suivant. \n" +
                         " %link% \n" +
@@ -94,7 +102,7 @@ export default class UserApiService {
                         '<a href="%link%">Click here to connect</a><br/>' +
                         " If you did not make this request, please ignore this e-mail.<br/>" +
                         "</body></html>";
-                    if(properties.MAIL_SERVICE!=="DISABLED") {
+                    if (properties.MAIL_SERVICE !== "DISABLED") {
                         axios.post(properties.MAIL_SERVICE + "/mail", {
                             to: mail,
                             from: "admin@aptero.co",
@@ -104,13 +112,17 @@ export default class UserApiService {
                         })
                     }
                 }
-                this.userdb.updateUser(accountId, mail, signinurl,profile).then((user) => {
-                    res.json(user);
-                }).catch((err) => {
-                    console.error(err);
-                    res.status(500).json(err);
-                });
-            }else{
+                if (properties.MONGODB !== "DISABLED") {
+                    this.userdb.updateUser(accountId, mail, signinurl, profile).then((user) => {
+                        res.json(user);
+                    }).catch((err) => {
+                        console.error(err);
+                        res.status(500).json(err);
+                    });
+                } else {
+                    res.json("DONE");
+                }
+            } else {
                 console.error("no email");
                 res.status(500).json("no user id or email");
             }
@@ -119,18 +131,18 @@ export default class UserApiService {
 
         router.post('/list', (req, res) => {
             let json = req.body;
-            if(json.TOKEN!==properties.ADMIN_TOKEN){
+            if (json.TOKEN !== properties.ADMIN_TOKEN) {
                 res.status(500).json("Invalid Token");
-            }else {
+            } else {
                 res.json(this.userDataCache);
             }
         });
 
         router.post('/approve', async (req, res) => {
             let json = req.body;
-            if(json.TOKEN!==properties.ADMIN_TOKEN){
+            if (json.TOKEN !== properties.ADMIN_TOKEN) {
                 res.status(500).json("Invalid Token");
-            }else {
+            } else {
                 let entry = this.userDataCache[json.email]
                 await axios.get(entry.signinurl);
                 delete this.userDataCache[json.email];
@@ -142,7 +154,6 @@ export default class UserApiService {
     }
 
     start(expressApp: any): void {
-        this.feathersApp = expressApp;
         this.expressApp = expressApp;
         this.mountAPI();
     }

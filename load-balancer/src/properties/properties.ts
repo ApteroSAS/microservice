@@ -1,3 +1,8 @@
+export let properties = {
+    MONGODB: process.env.MONGODB ? process.env.MONGODB : "mongodb+srv://dev:sjkPbH1zh78vdKRY@apteromain-h7nsw.mongodb.net/aptero-dev?retryWrites=true",
+    ROOM_SERVICE: process.env.ROOM_SERVICE ? process.env.ROOM_SERVICE : "https://alphahub.aptero.co/service/room/"
+};
+
 export function checkRequiredProperties(){
     if(process.env.PROD) {
         let toCheck = Object.keys(properties);
@@ -8,10 +13,5 @@ export function checkRequiredProperties(){
         }
     }
 }
-
 checkRequiredProperties();
 
-export let properties = {
-    MONGODB: process.env.MONGODB ? process.env.MONGODB : "mongodb+srv://dev:sjkPbH1zh78vdKRY@apteromain-h7nsw.mongodb.net/aptero-dev?retryWrites=true",
-    ROOM_SERVICE: process.env.ROOM_SERVICE ? process.env.ROOM_SERVICE : "https://alphahub.aptero.co/service/room/"
-};

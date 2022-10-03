@@ -52,7 +52,7 @@ export default class UserDataBase {
     findUserByMail(mail):Promise<String>{
         return new Promise<String>((resolve, reject) => {
             userDB.find({ email: mail}).then((user:any)=>{
-                resolve(user.accountId);//TODO iq this realy working????
+                resolve(user.accountId);//TODO is this realy working????
             }).catch(err => {
                 reject(err);
             });

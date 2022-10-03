@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { ObjectID } from "mongodb";
-import { json } from "body-parser";
 import {userProfileDB} from "./UserProfileModel"
 //import { UserProfileModel } from "./UserProfileModel";
 const Schema = mongoose.Schema;
