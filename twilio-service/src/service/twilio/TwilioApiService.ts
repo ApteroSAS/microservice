@@ -16,6 +16,20 @@ export default class TwilioApiService {
             res.json(apiVersion);
         });
 
+        router.get('/ice', (req, res) => {
+            try{
+                this.service.getIce().then((ices)=>{
+                    res.send(ices);
+                }).catch(err =>{
+                    console.error(err);
+                    res.status(500).json(err);
+                })
+            }catch(err){
+                console.error(err);
+                res.status(500).json(err);
+            }
+        });
+
         router.get('/token', (req, res) => {
             const { identity, roomName } = req.query;
             try{

@@ -1,15 +1,15 @@
-FROM node:14.16
+FROM node:16
 
 ENV PORT 8194
 EXPOSE 8194
 
 COPY ./package.json ./package.json
-COPY ./package-lock.json ./package-lock.json
+COPY ./yarn.lock ./yarn.lock
 COPY ./tsconfig.json ./tsconfig.json
-RUN npm install
+RUN yarn
 
 COPY ./src ./src
-RUN npm run build
+RUN yarn build
 
 #RUN npm run test
 
