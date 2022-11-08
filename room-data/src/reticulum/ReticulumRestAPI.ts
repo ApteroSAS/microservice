@@ -30,6 +30,9 @@ export class ReticulumRestAPI {
     }
 
     async getRoomMeta(roomSid: string): Promise<{ "description": string, "id": string, "images": { "preview": { "url": string } }, "lobby_count": number, "member_count": number, "name": string, "room_size": number, "scene_id": string, "type": string, "url": string, "user_data": any }> {
+        if(roomSid.length!=7){
+            throw new Error("roomSid failed integrity check ; "+roomSid);
+        }
         return this.promiseQueue.add(async () => {
             let axiosResponse = await axios.post(this.host + "/api/v1/hubs", {
                 "hub": {

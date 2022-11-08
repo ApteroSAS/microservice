@@ -1,6 +1,6 @@
 {
   "name": "@aptero/service-room-data",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "",
   "main": "index.ts",
   "private": false,
