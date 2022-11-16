@@ -41,7 +41,8 @@ export default class UserDataBase {
                 if(user.length===1) {
                     resolve(user[0]);
                 }else{
-                    reject("invalid array size");
+                    //user not found
+                    resolve(null);
                 }
             }).catch(err => {
                 reject(err);
