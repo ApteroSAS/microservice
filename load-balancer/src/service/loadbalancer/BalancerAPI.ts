@@ -102,6 +102,8 @@ export class BalancerAPI {
         let data = await this.room.clone(roomSID);
         let name = newName();
         await this.balancerDataBase.addCloneToDb(roomSID, data.hub_id, name);
+        //notify default room
+        await this.room.triggerRoomUpdate(roomSID);
         return data.url;
     }
 
