@@ -173,7 +173,7 @@
 
             // Read parameters specified in the URL query string
             // By default, use the host and port of server that served this file
-            const host = "meet.aptero.co";
+            const host = window.service.host;
             let port = "443";
             const password = rpassword;
             const path = "reverse/" + vmData.ip + "/" + vmData.port + "/websockify";
@@ -235,9 +235,9 @@
             createRFB();
 
             //send heart beat to activate the VM # specific aptero
-            fetch("https://meet.aptero.co/service/remote/orchestrator/heart/beat/"+vmsid);
+            fetch("https://"+window.service.host+"/service/remote/orchestrator/heart/beat/"+vmsid);
             setInterval(()=>{
-                fetch("https://meet.aptero.co/service/remote/orchestrator/heart/beat/"+vmsid);
+                fetch("https://"+window.service.host+"/service/remote/orchestrator/heart/beat/"+vmsid);
             },5*60*60*1000)
         });
 

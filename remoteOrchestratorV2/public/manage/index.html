@@ -16,168 +16,33 @@
     <!--FONT AWESOME-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
 
-
 </head>
 
 <body>
 INTERNAL USE ONLY
 <div>
     <h1>Create Ephemeral VM</h1>
-    <script type="module">
-        document.addEventListener("DOMContentLoaded", (event) => {
-            let urlEl = document.getElementById("ephemeral_link_url");
-            urlEl.addEventListener("change", () => {
-                const novncURL = new URL("https://" + window.service.host + "/service/remote/orchestrator/static/manage/vnc/vnc_once.html")
-                //const novncURL = new URL("https://novnc.com/noVNC/vnc_lite.html");
-                novncURL.searchParams.set("url", new URL(urlEl.value).toString());
-                document.getElementById("ephemeral_link_result").value = novncURL.toString();
-            })
-        });
-    </script>
 
     Used in case an iframe is blocked. each time the link is clicked it will generate a ephemeral session with the url
     loaded in it. Session is unique for each person. to is the sithe of the container displaying it.
     <br/>Url: <input id="ephemeral_link_url" placeholder="https://www.google.com" type="text" style="width:100%"/><br/>
-    <br/>Link: <input id="ephemeral_link_result" placeholder="" type="text" style="width:100%"/><br/>
+
+    <br/>
+    <input type="button" style="width: 200px;background-color: lightblue;" value="Create" onclick="ephemeralVMCreate()"> <br/>
+    <br/>
+
+    <br/>Link 2D: <input id="ephemeral_link_result"
+                         readonly
+                         placeholder="https://vm.aptero.co/service/remote/orchestrator/static/manage/vnc/vnc_once.html?url=https%3A%2F%2Fgoogle.com%2F" type="text" style="width:100%"/><br/>
 
 </div>
+<br/>
+<br/>
+<br/>
 <div>
     <h1>Create Permanent VM</h1>
 
-    <script>
-        const paramHost = new URL(window.location.href).searchParams.get("host");
-        window.service = {
-            host: paramHost || window.location.host
-        }
-
-        function generateNewFrame(sessionID, width, height, image, imageParams, password) {
-            if (!imageParams) {
-                imageParams = {}
-            }
-            imageParams["PASSWORD"] = password;
-            return "web-browser:" + btoa(JSON.stringify({
-                sessionID,
-                width,
-                height,
-                image,
-                imageParams
-            })) + "/web-browser.mp4";
-        }
-
-        function display() {
-            const sessionid = document.getElementById("sessionid").value;
-            const width = document.getElementById("width").value;
-            const height = document.getElementById("height").value;
-            const image = document.getElementById("type").value;
-            const password = document.getElementById("password").value;
-            if (sessionid === "" || sessionid.length < 6 || sessionid.indexOf("public") !== -1) {
-                alert("invalid sessionid")
-                return;
-            }
-            const imageParams = JSON.parse(document.getElementById("image_params").value);
-            document.getElementById("result").value = generateNewFrame(sessionid, width, height, image, imageParams, password);
-            document.getElementById("result").value = document.getElementById("result").value;
-        }
-
-        function makeid(length) {
-            var result = "";
-            var characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            var charactersLength = characters.length;
-            for (var i = 0; i < length; i++) {
-                result += characters.charAt(Math.floor(Math.random() * charactersLength));
-            }
-            return result;
-        }
-
-        $("document").ready(function () {
-            //document.getElementById("sessionid").value = document.getElementById("sessionid").value + "-" + makeid(5);
-            document.getElementById("password").value = document.getElementById("password").value + "-" + makeid(5);
-        });
-
-        function generateNoVNCLink(vmUrl, password, vmsid) {
-            vmUrl = vmUrl.replace("wss", "https"); //replace first
-            vmUrl = new URL(vmUrl);
-            const host = vmUrl.host;
-            const port = vmUrl.port === "" ? 443 : vmUrl.port;
-            const path = vmUrl.pathname.replace("/", ""); //remove first slash
-            const novncURL = new URL("https://" + window.service.host + "/service/remote/orchestrator/static/manage/vnc/vnc_lite.html")
-            //const novncURL = new URL("https://novnc.com/noVNC/vnc_lite.html");
-            novncURL.searchParams.set("host", host);
-            novncURL.searchParams.set("port", port);
-            novncURL.searchParams.set("path", path);
-            novncURL.searchParams.set("scale", true);
-            novncURL.searchParams.set("password", password);
-            novncURL.searchParams.set("vmsid", vmsid)
-            //https://novnc.com/noVNC/vnc_lite.html?host=meet.aptero.co&port=443&path=reverse/172.20.0.7/8080/websockify&scale=true
-            return novncURL.toString();
-        }
-
-        const IN_APP_WEB_BROWSER_PROTOCOL = "web-browser:";
-        const IN_APP_WEB_BROWSER_TRAIL = "/web-browser.mp4";
-
-        async function getNoVNCLink(screenSRC) {
-            return new Promise((resolve, reject) => {
-                screenSRC = screenSRC.replace(IN_APP_WEB_BROWSER_PROTOCOL, "");
-                screenSRC = screenSRC.replace(IN_APP_WEB_BROWSER_TRAIL, "");
-                let metaData = JSON.parse(atob(screenSRC));
-                axios.post("https://" + window.service.host + "/service/remote/orchestrator/create", {
-                    localSessionID: "none",
-                    remoteScreenSessionId: metaData.sessionID,
-                    screenSizeX: metaData.width,
-                    screenSizeY: metaData.height,
-                    dockerImage: metaData.image,
-                    imageParams: metaData.imageParams
-                }).then(async resp => {
-                    resp = resp.data;
-                    const url = "wss://" + window.service.host + "/reverse/" + resp.ip + "/" + resp.port + "/websockify";
-                    resolve({
-                        url,
-                        password: metaData.imageParams ? metaData.imageParams.PASSWORD : undefined,
-                        vmsid: resp.vmsid
-                    });
-                }).catch(err => {
-                    console.log(err);
-                    reject(err);
-                });
-            });
-        }
-
-        //wss://meet.aptero.co/reverse/172.20.0.7/8080/websockify
-        async function generateLink() {
-            let screenSRC = document.getElementById("result").value
-            let data = await getNoVNCLink(screenSRC);
-            let vmVNCLink = generateNoVNCLink(data.url, data.password, data.vmsid);
-            //window.open(vmVNCLink, '_blank').focus();
-            const atag = document.getElementById("vm_vnc_link");
-            atag.style.visibility = "visible";
-            atag.href = vmVNCLink;
-        }
-
-        //wss://meet.aptero.co/reverse/172.20.0.7/8080/websockify
-        async function update() {
-            let screenSRC = document.getElementById("result").value;
-            screenSRC = screenSRC.replace(IN_APP_WEB_BROWSER_PROTOCOL, "");
-            screenSRC = screenSRC.replace(IN_APP_WEB_BROWSER_TRAIL, "");
-            let metaData = JSON.parse(atob(screenSRC));
-            document.getElementById("sessionid").value = metaData.sessionID;
-            document.getElementById("width").value = metaData.width;
-            document.getElementById("height").value = metaData.height;
-            document.getElementById("type").value = metaData.image;
-            document.getElementById("image_params").value = JSON.stringify(metaData.imageParams);
-            document.getElementById("password").value = metaData.imageParams ? metaData.imageParams.PASSWORD : "";
-        }
-
-        document.addEventListener("DOMContentLoaded", (event) => {
-            let urlEl = document.getElementById("result");
-            urlEl.addEventListener("change", () => {
-                const atag = document.getElementById("vm_vnc_link");
-                atag.style.visibility = "hidden";
-                this.update();
-            })
-        })
-    </script>
-    <form id="form1" action="#">
-
+    <form id="permanent" action="#">
         Sessionid <b>( Mandatory - needs a value - must be unique )</b>:
         <input id="sessionid" type="text" value=""/><br/>
         Width: <input id="width" type="text" value="1024"/><br/>
@@ -189,58 +54,53 @@ INTERNAL USE ONLY
         Image parameters: <br/>
         <div>Example : {"URL":"https://www.google.com","KIOSK_BTN":"true","MODE":"kiosk ou app"}</div>
         <input id="image_params" type="text" style="width:100%" value='{}'/>
-        <input type="button" value="Genrate New VM Link" onclick="display()"> <br/>
-        <input type="button" value="Generate VM Control Link" onclick="generateLink()"></br>
-        Link: <input id="result"
+        <br/>
+        <br/>
+        <input type="button" style="width: 200px;background-color: lightblue;" value="Create" onclick="permanentVMCreate()"> <br/>
+        <br/>
+        Link 3d: <input id="result-link-3d-permanent"
+                        readonly
                      placeholder="web-browser:eyJzZXNzaW9uSUQiOiJwdWJsaWMtZ25wUnciLCJzdGFydFVybCI6ImxpbnV4Iiwid2lkdGgiOiIxMDI0IiwiaGVpZ2h0IjoiNzY4In0=/web-browser.mp4"
                      type="text" style="width:100%"/><br/>
-        <a id="vm_vnc_link" href="#" style="visibility:hidden">Click to connect to VM</a></br>
+        <br/>
+        Link 2d: <input id="result-link-2d-permanent"
+                        readonly
+                        placeholder="TODO"
+                        type="text" style="width:100%"/><br/>
     </form>
-
-
-    <h1>VM List</h1>
-
-    <ul id="vm_list">
-    </ul>
-    <script>
-        //wss://meet.aptero.co/reverse/172.20.0.7/8080/websockify
-        function createEntry(vmName) {
-            let element = document.createElement('li');
-            element.innerHTML = vmName + " ";
-
-            let elementARemove = document.createElement('a');
-            elementARemove.href = "https://meet.aptero.co/service/remote/orchestrator/vm/remove/" + vmName;
-            elementARemove.innerHTML = "remove"
-
-            /*let elementAControl = document.createElement('a');
-            elementAControl.href="#";
-            elementAControl.innerHTML="ctrl"*/
-
-            let space = document.createElement('span')
-            space.innerHTML = " ";
-
-            element.appendChild(elementARemove);
-            element.appendChild(space);
-            //element.appendChild(elementAControl);
-            return element;
-        }
-
-        async function fillList() {
-            let vmList = document.getElementById("vm_list");
-            axios.get("https://" + window.service.host + "/service/remote/orchestrator/vm/list").then(async resp => {
-                resp = resp.data;
-                for (const respKey of resp) {
-                    vmList.appendChild(createEntry(respKey));
-                }
-            }).catch(err => {
-                console.log(err);
-                reject(err);
-            });
-        }
-
-        fillList();
-    </script>
 </div>
+<br/>
+<br/>
+<br/>
+<div>
+    <h1>Link Explain</h1>
+
+    <form id="explain" action="#">
+        Past Link Here to see details: <input id="explain-link-3d"
+                     placeholder="web-browser:eyJzZXNzaW9uSUQiOiJwdWJsaWMtZ25wUnciLCJzdGFydFVybCI6ImxpbnV4Iiwid2lkdGgiOiIxMDI0IiwiaGVpZ2h0IjoiNzY4In0=/web-browser.mp4"
+                     type="text" style="width:100%"/><br/>
+        <br/>
+        <br/>
+        Sessionid:
+        <input id="explain-sessionid" type="text" value=""/><br/>
+        Width: <input id="explain-width" type="text" value="1024"/><br/>
+        Height: <input id="explain-height" type="text" value="768"/><br/>
+        Password: <input id="explain-password" type="text" value="pw"/><br/>
+        Type:<br/>
+        <input id="explain-type" type="text" style="min-width:50%" value="registry.aptero.co/chrome-renderer"/><br/>
+        Image parameters: <br/>
+        <input id="explain-image_params" type="text" style="width:100%" value='{}'/>
+    </form>
+</div>
+<br/>
+<br/>
+<br/>
+<div>
+    <h1>VM List</h1>
+    <ul id="vm_list"></ul>
+</div>
+
+<script src="script.js"></script>
 
 </body>
 </html>

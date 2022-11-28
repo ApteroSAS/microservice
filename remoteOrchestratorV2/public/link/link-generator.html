@@ -43,8 +43,8 @@
             }
 
             function updateValue(e) {
-                urlToProxy = e.target.value || "meet.aptero.co/link";
-                let theURL= new URL('https://meet.aptero.co/service/remote/orchestrator/static/app/embed-app-v2.html');
+                urlToProxy = e.target.value || "vm.aptero.co/link";
+                let theURL= new URL('https://'+window.service.host+'/service/remote/orchestrator/static/app/embed-app-v2.html');
                 theURL.searchParams.set("q",btoa(urlToProxy));
                 //theURL.searchParams.set("u","standalone-user-"+((getRandomInt(1,100000)+"").padStart(7,"0")));
                 log.textContent = theURL.toString();

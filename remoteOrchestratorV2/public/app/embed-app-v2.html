@@ -45,13 +45,13 @@
                         return;
                     }
                     urlToProxy = atob(streamingURLBase64);
-                    let tutoURL = "https://meet.aptero.co/service/remote/orchestrator/static/tuto/tutoRedirect.html?url="+urlToProxy;
+                    let tutoURL = "https://"+window.service.host+"/service/remote/orchestrator/static/tuto/tutoRedirect.html?url="+urlToProxy;
                     if(!params.get('u')){
                         params.set('u', "default-user-"+((getRandomInt(1,100000)+"").padStart(7,"0")));
                         window.location.href = url.toString();//reload url with new user before starting the session
                     }
                     let user = params.get('u');
-                    let resp = await axios.post("https://" + "meet.aptero.co" + "/service/remote/orchestrator/getStreamApp", {
+                    let resp = await axios.post("https://"+window.service.host+"/service/remote/orchestrator/getStreamApp", {
                         "userId":user,
                         "sessionContext":tutoURL
                     });
