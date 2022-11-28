@@ -186,10 +186,19 @@ export default class RoomApiService {
             });
         });
 
-
         router.get('/room/:sid/entry', (req, res) => {
             let roomSID = req.params.sid;
             this.roomService.entry(roomSID).then((room) => {
+                res.json(room);
+            }).catch((err) => {
+                console.error(err);
+                res.status(500).json(err);
+            });
+        });
+
+        router.get('/room/:sid/trigger/update', (req, res) => {
+            let roomSID = req.params.sid;
+            this.phoenixController.sendRoomUpdated(roomSID).then((room) => {
                 res.json(room);
             }).catch((err) => {
                 console.error(err);

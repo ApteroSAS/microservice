@@ -9,6 +9,11 @@ export class RoomGateway {
         return axiosResponse.data;
     }
 
+    async triggerRoomUpdate(roomSID: string): Promise<number> {
+        let axiosResponse = await axios.get(this.serviceUrl + `room/${roomSID}/trigger/update`);
+        return axiosResponse.data;
+    }
+
     async getRoomEntry(roomSID: string):Promise<{"description":string,"id":string,"images":{"preview":{"url":string}},"lobby_count":number,"member_count":number,"name":string,"room_size":number,"scene_id":string,"type":string,"url":string,"user_data":any}> {
         let axiosResponse = await axios.get(this.serviceUrl + `room/${roomSID}/entry`);
         return axiosResponse.data;

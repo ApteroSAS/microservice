@@ -31,7 +31,11 @@ export default class UserApiService {
         router.get('/get/user/:email/id', (req, res) => {
             let email = req.params.email;
             this.userdb.findUserDataByMail(email).then((user) => {
-                res.json(user.userId);
+                if(!user){
+                    res.json(null);
+                }else {
+                    res.json(user.userId);
+                }
             }).catch((err) => {
                 console.error(err);
                 res.status(500).json(err);
@@ -40,7 +44,11 @@ export default class UserApiService {
         router.get('/get/user/:email', (req, res) => {
             let email = req.params.email;
             this.userdb.findUserDataByMail(email).then((user) => {
-                res.json(user.profile);
+                if(!user){
+                    res.json(null);
+                }else {
+                    res.json(user.profile);
+                }
             }).catch((err) => {
                 console.error(err);
                 res.status(500).json(err);

@@ -100,7 +100,7 @@ export default class PhoenixController {
         });
     }
 
-    async sendMessageToRoomStandalone(roomSID:string,message:string){
+    async sendMessageToRoomStandalone(roomSID: string, message: string) {
         let phxChannel = await this.connectToRoom(roomSID);
         await phxChannel.push("message", {body: message, type: "chat"});
         await phxChannel.leave();
@@ -120,4 +120,14 @@ export default class PhoenixController {
         return new Presence(hubPhxChannel);
     }
 
+    async sendRoomUpdated(roomSID: string) {
+        let phxChannel = await this.connectToRoom(roomSID);
+        await phxChannel.push("hub_refresh", {session_id: null, hubs: [roomSID], stale_fields: []});
+        await phxChannel.push("message", {
+            body: {
+                roomSID: roomSID
+            }, type: "room-updated"
+        });
+        await phxChannel.leave();
+    }
 }
