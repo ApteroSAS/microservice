@@ -4,8 +4,9 @@ const IN_APP_WEB_BROWSER_TRAIL = "/web-browser.mp4";
 function init() {
     const paramHost = new URL(window.location.href).searchParams.get("host");
     window.service = {
-        host: paramHost || window.location.host.startsWith("localhost")?"vm.aptero.co":window.location.host
+        host: paramHost || (window.location.host.startsWith("localhost")?"vm.aptero.co":window.location.host)
     }
+    console.log(window.service.host);
 
     document.addEventListener("DOMContentLoaded", (event) => {
         let urlEl = document.getElementById("explain-link-3d");
