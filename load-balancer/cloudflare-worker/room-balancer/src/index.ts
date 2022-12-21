@@ -56,7 +56,7 @@ interface Instances {
     roomSID: string,
     updateTime: number,
     clones: {
-        [id: string]: {
+        [id: string]: {//id:RoomSID
             url: string,
             name: string,
             people: number,
@@ -101,7 +101,9 @@ const CLONE = "CLONE";
 const ADD_USER = "ADD_USER";
 
 export class RoomBalancerDurableObject {
-    private instances: { [id: string]: Instances } = {};
+    private instances: { [id: string]: Instances } = {};//id = roomSID - Parent room not the room SID of the clones
+    //API to get member count is too slow this will be used instead. In addition even if we call the api the people already entered are not comptabilized imediatly
+    localFastCache: { [id: string]: string } = {};//id/key is time in ms in string the value is room id
 
     // @ts-ignore
     constructor(state, env) {
@@ -133,23 +135,31 @@ export class RoomBalancerDurableObject {
         //use cache
         for (const instancesKey in this.instances) {
             const instance = this.instances[instancesKey];
-            for (const cloneKey in instance.clones) {
-                const clone = instance.clones[cloneKey];
-                if (parseUrl(clone.url).roomSID === roomSID) {
+            //test if the url correspond to on of the main room
+            if(instance.roomSID === roomSID){
+                return instance;
+            }
+            //test if the url correspond to one of the clones
+            for (const cloneRoomSID in instance.clones) {
+                if (cloneRoomSID === roomSID) {
                     //manual cache management
-                    if((this.instances[instancesKey].updateTime + revalidateinterval) < (new Date().getTime())){
-                        const metasForRoom = await this.getMetasForRoom(url);
-                        this.instances[metasForRoom.roomSID] = metasForRoom;
-                        this.instances[metasForRoom.roomSID].updateTime = new Date().getTime();
+                    //ensure latest data - return entire instance
+                    if ((this.instances[instancesKey].updateTime + revalidateinterval) < (new Date().getTime())) {
+                        return await this.updateRoomFromOrigin(url);
+                    }else {
+                        return this.instances[instancesKey];
                     }
-                    return this.instances[instancesKey];//ensure latest data
                 }
             }
         }
+        return await this.updateRoomFromOrigin(url);
+    }
+
+    private async updateRoomFromOrigin(url:string):Promise<Instances>{
         const metasForRoom = await this.getMetasForRoom(url);
         this.instances[metasForRoom.roomSID] = metasForRoom;
         this.instances[metasForRoom.roomSID].updateTime = new Date().getTime();
-        return metasForRoom;
+        return this.instances[metasForRoom.roomSID];
     }
 
     async fetch(request: Request) {
@@ -244,9 +254,13 @@ class RoomBalancer {
         const isGet = this.request.method === "GET";
         if (offline || !isGet) {
             //exception to load-balancer
-            return this.fetchRoomBody(this.targetUrl);
+            const response = await this.fetchRoomBody(this.targetUrl);
+            response.headers.set("fetchhost",headers.get("fetchhost")||"error");
+            return response;
         } else {
-            return this.computeRoomBody(this.targetUrl);
+            const response = await this.computeRoomBody(this.targetUrl);
+            response.headers.set("fetchhost",headers.get("fetchhost")||"error");
+            return response;
         }
         //return fetchRoomBody(targetUrl);
     }
@@ -254,8 +268,8 @@ class RoomBalancer {
     async notifyFastCache(urlIn: string): Promise<number> {
         return await (await this.roomBalancerDO.fetch(urlIn, {
             method: 'POST',
-            headers:{
-                dataObjectRequest:ADD_USER//to identify request in log
+            headers: {
+                dataObjectRequest: ADD_USER//to identify request in log
             },
             body: JSON.stringify({
                 fct: ADD_USER,
@@ -266,8 +280,8 @@ class RoomBalancer {
     async createClone(urlIn: string): Promise<string> {
         return await (await this.roomBalancerDO.fetch(urlIn, {
             method: 'POST',
-            headers:{
-                dataObjectRequest:CLONE//to identify request in log
+            headers: {
+                dataObjectRequest: CLONE//to identify request in log
             },
             body: JSON.stringify({
                 fct: CLONE,
@@ -278,8 +292,8 @@ class RoomBalancer {
     async getMetasForRoom(urlIn: string): Promise<Instances> {
         return await (await this.roomBalancerDO.fetch(urlIn, {
             method: 'POST',
-            headers:{
-                dataObjectRequest:GET_META//to identify request in log
+            headers: {
+                dataObjectRequest: GET_META//to identify request in log
             },
             body: JSON.stringify({
                 fct: GET_META,
@@ -330,7 +344,8 @@ class RoomBalancer {
         let roomEntry = getRoomEntry(instances, urlIn);
         let maxLoad = roomEntry.peopleMax;
         let load = RoomBalancer.getPeopleCount(instances, urlIn);
-        if (load >= maxLoad) {
+        const delta = maxLoad > 8 ? 2 : 0;//margin of empty space
+        if (load >= (maxLoad - delta)) {
             //console.log("Try assigning to new room : " + load + "/" + maxLoad);
             let outputUrl = await this.computeRedirectBody(instances, roomSID, maxLoad, urlIn);
             //add +1user on this url do not wait write
