@@ -33,7 +33,7 @@ export default class LoadBalancerApiService {
         router.get('/clone', async (req, res) => {
             try{
                 let url = decodeURIComponent(req.query.url);
-                let data = await this.balancerApi.createClone(url);
+                let data = await this.balancerApi.createCloneUrl(url);
                 res.json(data);
             }catch (e) {
                 console.error(e);

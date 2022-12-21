@@ -102,11 +102,22 @@ const ADD_USER = "ADD_USER";
 
 export class RoomBalancerDurableObject {
     private instances: { [id: string]: Instances } = {};
-    private localFastCache: { [id: string]: { timeMs: number } } = {};//room key
 
     // @ts-ignore
     constructor(state, env) {
         this.instances = {}
+    }
+
+
+    async createClone(roomUrl: string): Promise<string> {
+        let {origin} = parseUrl(roomUrl);
+        const res = await fetch(origin + "/service/loadbalancer/clone?url=" + roomUrl);
+
+        //update instance cache
+        const metasForRoom = await this.getMetasForRoom(roomUrl);
+        this.instances[metasForRoom.roomSID] = metasForRoom;//cache for next time
+
+        return await res.json();
     }
 
     async getMetasForRoom(roomUrl: string): Promise<Instances> {
@@ -118,37 +129,23 @@ export class RoomBalancerDurableObject {
 
     async getInstance(url: string): Promise<Instances> {
         const {roomSID} = parseUrl(url);
+        const revalidateinterval = 60 * 1000;//ms - 3min - must correspond to loading time of room
+        //use cache
         for (const instancesKey in this.instances) {
             const instance = this.instances[instancesKey];
-            let found = false;
             for (const cloneKey in instance.clones) {
                 const clone = instance.clones[cloneKey];
                 if (parseUrl(clone.url).roomSID === roomSID) {
-                }
-            }
-            if (found) {
-                //update to the instances to the latest number of people since fetch
-                for (const cloneKey in instance.clones) {
-                    const clone = instance.clones[cloneKey];
-                    //Remove deprecated entry
-                    for (const localFastCacheKey in this.localFastCache) {
-                        const fastCacheElement = this.localFastCache[localFastCacheKey];
-                        if (fastCacheElement.timeMs < instance.updateTime) {
-                            delete this.localFastCache[localFastCacheKey];
-                        }
+                    //manual cache management
+                    if((this.instances[instancesKey].updateTime + revalidateinterval) < (new Date().getTime())){
+                        const metasForRoom = await this.getMetasForRoom(url);
+                        this.instances[metasForRoom.roomSID] = metasForRoom;
+                        this.instances[metasForRoom.roomSID].updateTime = new Date().getTime();
                     }
-                    //count people with right time
-                    for (const localFastCacheKey in this.localFastCache) {
-                        if (localFastCacheKey === clone.url) {
-                            clone.people++;
-                        }
-                    }
+                    return this.instances[instancesKey];//ensure latest data
                 }
-                instance.updateTime = new Date().getTime();
-                return instance;
             }
         }
-        //here the instance has not be found
         const metasForRoom = await this.getMetasForRoom(url);
         this.instances[metasForRoom.roomSID] = metasForRoom;
         this.instances[metasForRoom.roomSID].updateTime = new Date().getTime();
@@ -158,30 +155,34 @@ export class RoomBalancerDurableObject {
     async fetch(request: Request) {
         let json = await request.json() as any;
         let fct = json.fct;
+        const url = new URL(request.url);
+        const urlString = url.origin + url.pathname;//remove search params
         switch (fct) {
             case ADD_USER:
-                this.notifyCount(request.url);
-                return new Response();
+                return new Response(JSON.stringify(await this.notifyCount(urlString)));
             case GET_META:
-                return new Response(JSON.stringify(await this.getInstance(request.url)));
+                return new Response(JSON.stringify(await this.getInstance(urlString)));
             case CLONE:
-                return new Response(JSON.stringify(await this.createClone(request.url)));
+                return new Response(JSON.stringify(await this.createClone(urlString)));
             default:
                 throw new Error();
         }
     }
 
-    async createClone(roomUrl: string): Promise<string> {
-        let {origin} = parseUrl(roomUrl);
-        const res = await fetch(origin + "/service/loadbalancer/clone?url=" + roomUrl);
-        //update instance cache
-        const metasForRoom = await this.getMetasForRoom(roomUrl);
-        this.instances[metasForRoom.roomSID] = metasForRoom;//cache for nex time
-        return await res.json();
-    }
-
-    private notifyCount(urlIn: string): void {
-        this.localFastCache[urlIn] = {timeMs: new Date().getTime()}
+    private async notifyCount(urlIn: string): Promise<number> {
+        const {roomSID} = parseUrl(urlIn);
+        await this.getInstance(urlIn);//fetch if needed / refresh
+        for (const instancesKey in this.instances) {
+            const instance = this.instances[instancesKey];
+            for (const cloneKey in instance.clones) {
+                const clone = instance.clones[cloneKey];
+                if (parseUrl(clone.url).roomSID === roomSID) {
+                    clone.people++;
+                    return clone.people;
+                }
+            }
+        }
+        throw new Error();
     }
 }
 
@@ -198,7 +199,6 @@ class RoomBalancer {
 
     public async getResponse() {
         const url = new URL(this.request.url);
-        //TODO manage head request
         const {pathname, search} = url;
         let host = "https://alphahub.aptero.co"
         // @ts-ignore
@@ -208,22 +208,32 @@ class RoomBalancer {
         }
         this.targetUrl = host + pathname + search;
 
-        if(url.href.endsWith(".ico") || url.href.endsWith(".js") || url.href.endsWith(".css")){
-            return new Response("ERROR");
+        if (url.href.endsWith(".ico") || url.href.endsWith(".js") || url.href.endsWith(".css") || url.href.endsWith(".gltf")) {
+            const res = await fetch(this.targetUrl, {
+                body: this.request.body,
+                headers: this.request.headers,
+                method: this.request.method,
+                redirect: "manual",
+            });
+            return new Response(res.body, {status: res.status, statusText: res.statusText, headers: res.headers});
         }
 
-        switch (url.searchParams.get("debug")){
+        switch (url.searchParams.get("debug")) {
+            //eg
+            //http://127.0.0.1:8787/PaLjUa2/room-balancer-test-2?debug=meta
+            //http://room-balancer.aptero.workers.dev/PaLjUa2/room-balancer-test-2?debug=meta
             case "meta":
-                //http://127.0.0.1:8787/PaLjUa2/room-balancer-test-2?debug=meta
                 return new Response(JSON.stringify(await this.getMetasForRoom(this.targetUrl)));
             case "entry":
                 const instances = await this.getMetasForRoom(this.targetUrl);
-                return new Response(JSON.stringify(getRoomEntry(instances,this.targetUrl)));
+                return new Response(JSON.stringify(getRoomEntry(instances, this.targetUrl)));
             case "count":
                 const instances2 = await this.getMetasForRoom(this.targetUrl);
                 return new Response(JSON.stringify(RoomBalancer.getPeopleCount(instances2, this.targetUrl)));
             case "add":
-                return new Response(JSON.stringify(this.notifyFastCache(this.targetUrl)));
+                return new Response(JSON.stringify(await this.notifyFastCache(this.targetUrl)));
+            case "clone":
+                return new Response(JSON.stringify(await this.createClone(this.targetUrl)));
             case "enter":
                 return new Response(JSON.stringify(await this.computeRoomURL(this.targetUrl)));
         }
@@ -231,7 +241,8 @@ class RoomBalancer {
         let offline = url.searchParams.get("offline2") === "true"
             || url.searchParams.get("offline") === "true"
             || url.searchParams.get("nolb") === "true";
-        if (offline) {
+        const isGet = this.request.method === "GET";
+        if (offline || !isGet) {
             //exception to load-balancer
             return this.fetchRoomBody(this.targetUrl);
         } else {
@@ -240,20 +251,24 @@ class RoomBalancer {
         //return fetchRoomBody(targetUrl);
     }
 
-    async notifyFastCache(urlIn: string): Promise<void> {
-        // Send a non-blocking POST request.
-        // ~> Completes before the Worker exits.
-        this.ctx.waitUntil(await this.roomBalancerDO.fetch(urlIn, {
+    async notifyFastCache(urlIn: string): Promise<number> {
+        return await (await this.roomBalancerDO.fetch(urlIn, {
             method: 'POST',
+            headers:{
+                dataObjectRequest:ADD_USER//to identify request in log
+            },
             body: JSON.stringify({
                 fct: ADD_USER,
             }),
-        }) as any);
+        })).json();
     }
 
     async createClone(urlIn: string): Promise<string> {
-        return (await this.roomBalancerDO.fetch(urlIn, {
+        return await (await this.roomBalancerDO.fetch(urlIn, {
             method: 'POST',
+            headers:{
+                dataObjectRequest:CLONE//to identify request in log
+            },
             body: JSON.stringify({
                 fct: CLONE,
             }),
@@ -263,6 +278,9 @@ class RoomBalancer {
     async getMetasForRoom(urlIn: string): Promise<Instances> {
         return await (await this.roomBalancerDO.fetch(urlIn, {
             method: 'POST',
+            headers:{
+                dataObjectRequest:GET_META//to identify request in log
+            },
             body: JSON.stringify({
                 fct: GET_META,
             }),
@@ -301,7 +319,7 @@ class RoomBalancer {
         return room;
     }
 
-    async computeRoomURL(urlIn: string):Promise<string> {
+    async computeRoomURL(urlIn: string): Promise<string> {
         let {roomSID} = parseUrl(urlIn);
         //console.log("computeUrl on : " + roomSID);
         let instances = await this.getMetasForRoom(urlIn);
@@ -314,27 +332,26 @@ class RoomBalancer {
         let load = RoomBalancer.getPeopleCount(instances, urlIn);
         if (load >= maxLoad) {
             //console.log("Try assigning to new room : " + load + "/" + maxLoad);
-            return await this.computeRedirectBody(instances, roomSID, maxLoad, urlIn);
+            let outputUrl = await this.computeRedirectBody(instances, roomSID, maxLoad, urlIn);
+            //add +1user on this url do not wait write
+            this.notifyFastCache(outputUrl).then(() => {
+            });
+            return outputUrl;
         } else {
             //console.log("Accept current room : " + load + "/" + maxLoad + " : " + urlIn);
+            //add +1user on this url do not wait write
+            this.notifyFastCache(urlIn).then(() => {
+            });
             return urlIn;
         }
     }
 
-    async computeRoomBody(urlIn: string):Promise<Response> {
-        const outputUrl = await this.computeRoomURL(urlIn);
-        this.notifyFastCache(outputUrl).then(() => {});//add +1user on this url do not wait write
-        return this.fetchRoomBody(outputUrl);
+    async computeRoomBody(urlIn: string): Promise<Response> {
+        return this.fetchRoomBody(await this.computeRoomURL(urlIn));
     }
 
     private static getPeopleCount(instances: Instances, urlIn: string): number {
-        for (const cloneKey in instances.clones) {
-            const clone = instances.clones[cloneKey];
-            if (clone.url === urlIn) {
-                return clone.people;
-            }
-        }
-        return 0;
+        return getRoomEntry(instances, urlIn).people;
     }
 }
 

@@ -103,14 +103,8 @@ export class BalancerAPI {
     }
 
     async createCloneUrl(url: string): Promise<string> {
-        const {origin,roomSID}  = this.parseUrl(url);
-        //register url as a clone for this room
-        let data = await this.room.clone(roomSID);
-        let name = newName();
-        await this.balancerDataBase.addCloneToDb(roomSID, data.hub_id, name);
-        //notify default room
-        await this.room.triggerRoomUpdate(roomSID);
-        return data.url;
+        const {roomSID} = this.parseUrl(url);
+        return this.createClone(roomSID);
     }
 
     async createClone(roomSID: string): Promise<string> {
