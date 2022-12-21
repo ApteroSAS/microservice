@@ -1,0 +1,11 @@
+name = "room-balancer"
+main = "src/index.ts"
+compatibility_date = "2022-12-19"
+
+durable_objects.bindings = [
+  { name = "roomBalancerDO", class_name = "RoomBalancerDurableObject" }
+]
+
+[[migrations]]
+tag = "v1" # Should be unique for each entry
+new_classes = ["RoomBalancerDurableObject"]

@@ -29,6 +29,18 @@ export default class LoadBalancerApiService {
             }
         });
 
+        //clone
+        router.get('/clone', async (req, res) => {
+            try{
+                let url = decodeURIComponent(req.query.url);
+                let data = await this.balancerApi.createClone(url);
+                res.json(data);
+            }catch (e) {
+                console.error(e);
+                res.json(e);
+            }
+        });
+
         router.get('/remove', async (req, res) => {
             try{
                 let url = decodeURIComponent(req.query.url);
@@ -40,6 +52,7 @@ export default class LoadBalancerApiService {
             }
         });
 
+        //must be high availability
         router.get('/meta', async (req, res) => {
             try{
                 let url = decodeURIComponent(req.query.url);

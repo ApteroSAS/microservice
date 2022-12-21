@@ -69,6 +69,11 @@ export class BalancerAPI {
         return true;
     }
 
+    async getEntry(url: string){
+        let {roomSID} = this.parseUrl(url);
+        return this.room.getRoomEntry(roomSID);
+    }
+
     async getMetaForRoom(url: string): Promise<Instances> {
         let {roomSID} = this.parseUrl(url);
         let instances: Instances = await this.balancerDataBase.getMetasForRoom(roomSID) || {
@@ -95,6 +100,17 @@ export class BalancerAPI {
             }
         }
         return instances;
+    }
+
+    async createCloneUrl(url: string): Promise<string> {
+        const {origin,roomSID}  = this.parseUrl(url);
+        //register url as a clone for this room
+        let data = await this.room.clone(roomSID);
+        let name = newName();
+        await this.balancerDataBase.addCloneToDb(roomSID, data.hub_id, name);
+        //notify default room
+        await this.room.triggerRoomUpdate(roomSID);
+        return data.url;
     }
 
     async createClone(roomSID: string): Promise<string> {
