@@ -77,7 +77,7 @@ interface CloneInstance {
     current: boolean,
     updateTime: number,
     parentRoomSID: string,
-    brothers:string[]
+    brothers: string[]
 }
 
 function makeid(length: number) {
@@ -143,7 +143,8 @@ export class RoomBalancerDurableObject {
         const res = await fetch(origin + "/service/loadbalancer/clone?url=" + roomUrl);
         //update instance cache
         const newurl = await res.json() as string;
-        await this.updateRoomFromOrigin(roomUrl,txn);
+        let {roomSID} = parseUrl(newurl);
+        await this.updateRoomFromOrigin(newurl, txn, roomSID);//Only add entry for the new room;
         return newurl;
     }
 
@@ -160,13 +161,13 @@ export class RoomBalancerDurableObject {
         const instance = await txn.get(roomSID, {noCache: false}) as CloneInstance;
         //manual cache management
         //ensure latest data - return entire instance - non blocking
-        if(instance){
+        if (instance) {
             if ((instance.updateTime + this.metaDataCacheTTL) < (new Date().getTime())) {
                 return await this.updateRoomFromOrigin(url, txn);
             } else {
                 return instance;
             }
-        }else {
+        } else {
             //cache miss fetch the data
             return await this.updateRoomFromOrigin(url, txn);
         }
@@ -176,10 +177,10 @@ export class RoomBalancerDurableObject {
         return Object.keys(instance.clones).indexOf(roomID) !== -1;//roomID found in clones
     }
 
-    private async updateRoomFromOrigin(url: string, txn: DurableObjectTransaction): Promise<CloneInstance> {
+    private async updateRoomFromOrigin(url: string, txn: DurableObjectTransaction, onlyRoomSID: string = ""): Promise<CloneInstance> {
         const {roomSID} = parseUrl(url);
-        const metasForRoom:Instances = await this.getMetasForRoom(url);
-        let putAll:{[id:string]:CloneInstance} = {};
+        const metasForRoom: Instances = await this.getMetasForRoom(url);
+        let putAll: { [id: string]: CloneInstance } = {};
         for (const metasForRoomKey in metasForRoom.clones) {
             const clone = metasForRoom.clones[metasForRoomKey];
             (clone as any).updateTime = new Date().getTime();
@@ -187,7 +188,12 @@ export class RoomBalancerDurableObject {
             (clone as any).brothers = Object.keys(metasForRoom.clones);
             putAll[metasForRoomKey] = clone as CloneInstance;
         }
-        await txn.put(putAll, {noCache: false});
+        if (onlyRoomSID) {
+            //only update one
+            await txn.put(onlyRoomSID, putAll[onlyRoomSID], {noCache: false});
+        } else {
+            await txn.put(putAll, {noCache: false});
+        }
         return putAll[roomSID];
     }
 
@@ -215,12 +221,12 @@ export class RoomBalancerDurableObject {
         }
     }
 
-    async computeRedirectUrl(clonesKeys:string[], maxLoad: number, urlIn: string,txn:DurableObjectTransaction): Promise<(string | null)> {
+    async computeRedirectUrl(clonesKeys: string[], maxLoad: number, urlIn: string, txn: DurableObjectTransaction): Promise<(string | null)> {
         //find a suitable clone (aka a clone with a reasonable load)
         for (const cloneRoomSID of clonesKeys) {
             const clone = await txn.get(cloneRoomSID) as CloneInstance;
-            if(!clone){
-                throw new Error("key not found :"+cloneRoomSID)
+            if (!clone) {
+                throw new Error("key not found :" + cloneRoomSID)
             }
             let load = clone.people;
             if (load < maxLoad) {
@@ -236,26 +242,28 @@ export class RoomBalancerDurableObject {
     /*this is the main function*/
     async computeRoomURL(urlIn: string): Promise<string> {
         return await this.state.storage.transaction(async (txn: DurableObjectTransaction) => {
-            const roomEntry = await this.getEntry(urlIn,txn);
+            const roomEntry = await this.getEntry(urlIn, txn);
             const maxLoad = roomEntry ? roomEntry.peopleMax : 15;
             const load = roomEntry ? roomEntry.people : 0;
             const delta = maxLoad >= 8 ? 2 : 0;//margin of empty space
             let clonesKeys = roomEntry.brothers;
             if (load >= (maxLoad - delta)) {
                 //console.log("Try assigning to new room : " + load + "/" + maxLoad);
-                let outputUrl = await this.computeRedirectUrl(clonesKeys,maxLoad, urlIn,txn);
+                let outputUrl = await this.computeRedirectUrl(clonesKeys, maxLoad, urlIn, txn);
                 if (outputUrl == null) {
                     //at this point if no clone found create one
                     //console.log("Creating a new room : " + room);
                     outputUrl = await this.createClone(urlIn, txn);
                 }
                 //add +1user on this url do not wait write
-                this.notifyCount(outputUrl, txn).then(()=>{});
+                this.notifyCount(outputUrl, txn).then(() => {
+                });
                 return outputUrl;
             } else {
                 //console.log("Accept current room : " + load + "/" + maxLoad + " : " + urlIn);
                 //add +1user on this url do not wait write
-                this.notifyCount(urlIn, txn).then(()=>{});
+                this.notifyCount(urlIn, txn).then(() => {
+                });
                 return urlIn;
             }
         })
@@ -305,7 +313,7 @@ class RoomBalancer {
             //eg
             //http://127.0.0.1:8787/PaLjUa2/room-balancer-test-2?debug=meta
             //http://room-balancer.aptero.workers.dev/PaLjUa2/room-balancer-test-2?debug=meta
-            return new Response(JSON.stringify(await this.execDurableObject(this.targetUrl,url.searchParams.get("debug") as string)));
+            return new Response(JSON.stringify(await this.execDurableObject(this.targetUrl, url.searchParams.get("debug") as string)));
         }
 
         let offline = url.searchParams.get("offline2") === "true"
@@ -353,6 +361,6 @@ class RoomBalancer {
     }
 
     async computeRoomBody(urlIn: string): Promise<Response> {
-        return this.fetchRoomBody(await this.execDurableObject<string>(urlIn,COMPUTE_URL));
+        return this.fetchRoomBody(await this.execDurableObject<string>(urlIn, COMPUTE_URL));
     }
 }
