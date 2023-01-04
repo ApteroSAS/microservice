@@ -215,7 +215,8 @@ export class RoomBalancerDurableObject {
                 return new Response(JSON.stringify(Object.fromEntries(await this.state.storage.list())));
             case "enter":
             case COMPUTE_URL:
-                return new Response(JSON.stringify(await this.computeRoomURL(urlString)));
+                const outputUrl = await this.computeRoomURL(urlString)+url.search;//Add search params again
+                return new Response(JSON.stringify(outputUrl));
             default:
                 throw new Error();
         }
