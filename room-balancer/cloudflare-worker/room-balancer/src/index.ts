@@ -323,11 +323,11 @@ class RoomBalancer {
         const isGet = this.request.method === "GET";
         if (offline || !isGet) {
             //exception to load-balancer
-            const response = await this.fetchRoomBody(this.targetUrl);
+            const response = await this.fetchRoomBody(this.targetUrl, this.request);
             response.headers.set("fetchhost", headers.get("fetchhost") || "error");
             return response;
         } else {
-            const response = await this.computeRoomBody(this.targetUrl);
+            const response = await this.computeRoomBody(this.targetUrl,this.request);
             response.headers.set("fetchhost", headers.get("fetchhost") || "error");
             return response;
         }
@@ -346,22 +346,26 @@ class RoomBalancer {
         })).json();
     }
 
-    async fetchRoomBody(targetUrl: string) {
+    async fetchRoomBody(targetUrl: string, request: Request) {
         //this request is cached every minutes
-        const requestHeaders = new Headers();
-        requestHeaders.set("x-room-balancer", "true");
+        const headers = new Headers(request.headers);
+        headers.set("x-room-balancer", "true");
         const res = await fetch(targetUrl, {
-            headers: requestHeaders, cf: {
+            body: request.body,
+            headers: headers,
+            method: request.method,
+            redirect: "manual",
+            cf: {
                 //https://developers.cloudflare.com/workers//runtime-apis/request#requestinitcfproperties
                 cacheEverything: true,
-                cacheTtl: 24 * 60 * 60,//// for a max of X seconds before revalidating the resource
+                cacheTtl: 1 * 60 * 60,//// for a max of X seconds before revalidating the resource
             }
         });
         const responseHeaders = new Headers(res.headers);
         return new Response(res.body, {status: res.status, statusText: res.statusText, headers: responseHeaders});
     }
 
-    async computeRoomBody(urlIn: string): Promise<Response> {
-        return this.fetchRoomBody(await this.execDurableObject<string>(urlIn, COMPUTE_URL));
+    async computeRoomBody(urlIn: string, request: Request): Promise<Response> {
+        return this.fetchRoomBody(await this.execDurableObject<string>(urlIn, COMPUTE_URL), this.request);
     }
 }
