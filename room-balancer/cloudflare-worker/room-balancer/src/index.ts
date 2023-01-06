@@ -50,6 +50,7 @@ export default {
         ctx: ExecutionContext
     ): Promise<Response> {
         return new RoomBalancer(request, env, ctx).getResponse();
+        //return new Response(new Headers(request.headers).get("cache-control"));
     },
 };
 
@@ -140,7 +141,13 @@ export class RoomBalancerDurableObject {
 
     async createClone(roomUrl: string, txn: DurableObjectTransaction): Promise<string> {
         let {origin} = parseUrl(roomUrl);
-        const res = await fetch(origin + "/service/loadbalancer/clone?url=" + roomUrl);
+        const res = await fetch(origin + "/service/loadbalancer/clone?url=" + roomUrl, {
+            cf: {
+                //no cache on room balancer query
+                cacheTtl: 0,
+                cacheTtlByStatus: {"200-299": 0, 404: 0, "500-599": 0}
+            }
+        });
         //update instance cache
         const newurl = await res.json() as string;
         let {roomSID} = parseUrl(newurl);
@@ -151,7 +158,13 @@ export class RoomBalancerDurableObject {
     async getMetasForRoom(roomUrl: string): Promise<Instances> {
         let {origin, roomSID} = parseUrl(roomUrl);
         //https://alphahub.aptero.co/service/loadbalancer/meta?url=https%3A%2F%2Falphahub.aptero.co%2FzdBzwbV%2Fwowza-live-stream-test
-        const res = await fetch(origin + "/service/loadbalancer/meta?url=" + roomUrl);
+        const res = await fetch(origin + "/service/loadbalancer/meta?url=" + roomUrl, {
+            cf: {
+                //no cache on room balancer query
+                cacheTtl: 0,
+                cacheTtlByStatus: {"200-299": 0, 404: 0, "500-599": 0}
+            }
+        });
         return (await res.json()) || {roomSID, clones: {}};
     }
 
@@ -215,7 +228,7 @@ export class RoomBalancerDurableObject {
                 return new Response(JSON.stringify(Object.fromEntries(await this.state.storage.list())));
             case "enter":
             case COMPUTE_URL:
-                const outputUrl = await this.computeRoomURL(urlString)+url.search;//Add search params again
+                const outputUrl = await this.computeRoomURL(urlString) + url.search;//Add search params again
                 return new Response(JSON.stringify(outputUrl));
             default:
                 throw new Error();
@@ -247,7 +260,7 @@ export class RoomBalancerDurableObject {
             const maxLoad = roomEntry ? roomEntry.peopleMax : 15;
             const load = roomEntry ? roomEntry.people : 0;
             const delta = maxLoad >= 8 ? 2 : 0;//margin of empty space
-            let clonesKeys = roomEntry.brothers;
+            let clonesKeys = roomEntry ? roomEntry.brothers : [];
             if (load >= (maxLoad - delta)) {
                 //console.log("Try assigning to new room : " + load + "/" + maxLoad);
                 let outputUrl = await this.computeRedirectUrl(clonesKeys, maxLoad, urlIn, txn);
@@ -327,7 +340,7 @@ class RoomBalancer {
             response.headers.set("fetchhost", headers.get("fetchhost") || "error");
             return response;
         } else {
-            const response = await this.computeRoomBody(this.targetUrl,this.request);
+            const response = await this.computeRoomBody(this.targetUrl, this.request);
             response.headers.set("fetchhost", headers.get("fetchhost") || "error");
             return response;
         }
@@ -342,7 +355,11 @@ class RoomBalancer {
             },
             body: JSON.stringify({
                 fct: fct,
-            }),
+            }), cf: {
+                //No cache for room durable object
+                cacheTtl: 0,
+                cacheTtlByStatus: {"200-299": 0, 404: 0, "500-599": 0}
+            }
         })).json();
     }
 
@@ -350,18 +367,50 @@ class RoomBalancer {
         //this request is cached every minutes
         const headers = new Headers(request.headers);
         headers.set("x-room-balancer", "true");
+        let cf;
+        //https://developers.cloudflare.com/workers//runtime-apis/request#requestinitcfproperties
+        //https://developers.cloudflare.com/cache/about/default-cache-behavior/#cloudflare-cache-responses
+        let cached;
+        if (headers.get("cache-control") == "no-cache") {
+            await caches.default.delete(request);
+            await caches.default.delete(targetUrl);
+            cf = {
+                cacheTtl: 0,
+                cacheTtlByStatus: {"200-299": 0, 404: 0, "500-599": 0}
+            }
+            cached=false;
+        } else {
+            cf = {
+                /*
+                Edge Cache TTL
+                Specify how long to cache a resource in the Cloudflare edge network. Edge Cache TTL isn't visible in response headers.  The minimum Edge Cache TTL depends on plan type:
+                Free - 2 hours
+                Pro - 1 hour
+                Business - 1 second
+                Enterprise - 1 second
+                 */
+                cacheEverything: true,
+                cacheTtl: 60 * 60,
+                cacheTtlByStatus: {"200-299": 60 * 60, 404: 0, "500-599": 0}//// for a max of X seconds before revalidating the resource
+            }
+            cached=true;
+        }
+
         const res = await fetch(targetUrl, {
             body: request.body,
             headers: headers,
             method: request.method,
             redirect: "manual",
-            cf: {
-                //https://developers.cloudflare.com/workers//runtime-apis/request#requestinitcfproperties
-                cacheEverything: true,
-                cacheTtl: 1 * 60 * 60,//// for a max of X seconds before revalidating the resource
-            }
+            cf
         });
+        if (res.status !== 200) {
+            //remove caches
+            await caches.default.delete(request);
+            await caches.default.delete(targetUrl);
+            cached = false;
+        }
         const responseHeaders = new Headers(res.headers);
+        responseHeaders.set("cf-worker-cache",""+cached);
         return new Response(res.body, {status: res.status, statusText: res.statusText, headers: responseHeaders});
     }
 
