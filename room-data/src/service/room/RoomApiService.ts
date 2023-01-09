@@ -9,6 +9,7 @@ import {RoomService} from "@root/service/room/RoomService";
 
 const express = require('express');
 
+//https://postgrest.org/en/stable/errors.html
 export default class RoomApiService {
     public expressApp;
     public feathersApp: any = null;
@@ -41,6 +42,26 @@ export default class RoomApiService {
                 console.error(err);
                 res.status(500).json(err);
             });
+        });
+
+        router.post('/room/copy/params', async (req, res) => {
+            try {
+                let data: {
+                    srcsid: string,
+                    dstsid: string,
+                    token: string
+                } = req.body;
+                if (data.token == properties.ADMIN_TOKEN) {
+                    let ret = await this.pgRoom.copyParams(data.srcsid, data.dstsid);
+                    res.json(ret);
+                } else {
+                    console.log("USER NOT ADMIN");
+                    res.status(500).json("USER NOT ADMIN");
+                }
+            }catch (e) {
+                console.log(e);
+                res.status(500).json(e);
+            }
         });
 
         router.post('/room/jwt/helper/mongo', async (req, res) => {

@@ -6,6 +6,7 @@ let propertiesBase = {
     //JWT_SECRET: process.env.JWT_SECRET ? process.env.JWT_SECRET : "47iqPEdWcfE7xRnyaxKDLt9OGEtkQG3SycHBEMOuT2qARmoESnhc76IgCUjaQIwX",
     JWT_SECRET: process.env.JWT_SECRET ? process.env.JWT_SECRET : "HS512CBBBBcfE7xRnyaxKDLt9OGEtkQG3SycHBEMOuT2qARmoESnhc76IgCUjaQIwY57iqPEdWcfE7xRnyaxKDLt9OGEtkQG3SycHBEMOuT2qARmoESnhc76IgCUjaQI",
     ADMIN_USER: process.env.ADMIN_USER ? process.env.ADMIN_USER : "640407050966269961",
+    ADMIN_TOKEN: process.env.ADMIN_TOKEN ? process.env.ADMIN_TOKEN : "xRnyaxKDLt9OGEtkQG3SycHB",//Token used to acces service to service api
     AUTO_OPENER_FEATURE: process.env.AUTO_OPENER_FEATURE ? process.env.AUTO_OPENER_FEATURE : "false",
 };
 

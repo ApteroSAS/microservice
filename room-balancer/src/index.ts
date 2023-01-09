@@ -1,6 +1,5 @@
 import 'module-alias/register';
 
-import cors from "cors";
 import express from "express";
 
 import LoadBalancerApiService from "@root/service/loadbalancer/LoadBalancerApiService";
@@ -14,8 +13,13 @@ console.log(new Date().toISOString());
 console.log(BUILD_VERSION);
 
 ///////// SETUP Express ////
+import bodyParser from 'body-parser';
+import cors from "cors";
 let expressApp = express();
+expressApp.use(bodyParser.json());
 expressApp.use(cors());
+// Parse JSON and form HTTP bodies
+expressApp.use(bodyParser.urlencoded({extended: true}));
 
 ///////// Setup Mongo ////
 startMongoose();

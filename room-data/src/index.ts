@@ -1,7 +1,5 @@
 import 'module-alias/register';
 import {properties} from "@root/properties/properties";
-let bodyParser = require('body-parser');
-let cors = require('cors');
 import express from "express";
 import RoomDataBaseService from "@root/mongodb/RoomDataBaseService";
 import RoomApiService from "@root/service/room/RoomApiService";
@@ -22,6 +20,8 @@ console.log(BUILD_VERSION);
 
 ///////// SETUP Express ////
 let expressApp = express();
+let bodyParser = require('body-parser');
+let cors = require('cors');
 expressApp.use(bodyParser.json());
 expressApp.use(cors());
 // Parse JSON and form HTTP bodies

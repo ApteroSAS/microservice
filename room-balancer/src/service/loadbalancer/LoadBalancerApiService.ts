@@ -1,4 +1,5 @@
 import {BalancerAPI} from "@root/service/loadbalancer/BalancerAPI";
+import {properties} from "@root/properties/properties";
 
 const express = require('express');
 
@@ -17,36 +18,51 @@ export default class LoadBalancerApiService {
             res.json(apiVersion);
         });
 
-        //Compute redirect url for room
-        router.get('/redirect', async (req, res) => {
-            try{
-                let url = decodeURIComponent(req.query.url);
-                let data = await this.balancerApi.computeUrl(url);
-                res.json(data);
-            }catch (e) {
-                console.error(e);
-                res.json(e);
-            }
-        });
-
         //clone
         router.get('/clone', async (req, res) => {
-            try{
+            try {
                 let url = decodeURIComponent(req.query.url);
                 let data = await this.balancerApi.createCloneUrl(url);
                 res.json(data);
-            }catch (e) {
+            } catch (e) {
                 console.error(e);
                 res.json(e);
             }
         });
 
         router.get('/remove', async (req, res) => {
-            try{
+            try {
                 let url = decodeURIComponent(req.query.url);
                 let data = await this.balancerApi.remove(url);
                 res.json(data);
-            }catch (e) {
+            } catch (e) {
+                console.error(e);
+                res.json(e);
+            }
+        });
+
+        router.post('/allocate/room', async (req, res) => {
+            try {
+                let url = decodeURIComponent(req.query.url);
+                let json: { targetPplNumber: number, token: string } = req.body;
+                if (json.token !== properties.ADMIN_TOKEN) {
+                    res.json("unauthorized");
+                    return;
+                }
+                let data = await this.balancerApi.allocate(url, json.targetPplNumber);
+                res.json(data);
+            } catch (e) {
+                console.error(e);
+                res.json(e);
+            }
+        });
+
+        router.post('/apply/change', async (req, res) => {
+            try {
+                let url = decodeURIComponent(req.query.url);
+                let data = await this.balancerApi.applyDefaultRoomChangeToOtherInstances(url);
+                res.json(data);
+            } catch (e) {
                 console.error(e);
                 res.json(e);
             }
@@ -54,11 +70,11 @@ export default class LoadBalancerApiService {
 
         //must be high availability
         router.get('/meta', async (req, res) => {
-            try{
+            try {
                 let url = decodeURIComponent(req.query.url);
                 let data = await this.balancerApi.getMetaForRoom(url);
                 res.json(data);
-            }catch (e) {
+            } catch (e) {
                 console.error(e);
                 res.json(e);
             }
