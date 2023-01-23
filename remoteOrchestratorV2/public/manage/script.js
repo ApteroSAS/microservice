@@ -65,7 +65,8 @@ async function getNoVNCLink(screenSRC) {
             imageParams: metaData.imageParams
         }).then(async resp => {
             resp = resp.data;
-            const url = "wss://" + window.service.host + "/reverse/" + resp.ip + "/" + resp.port + "/websockify";
+            let url1 = new URL(resp.url);
+            const url = "wss://" + url1.host + "/reverse/" + resp.ip + "/" + resp.port + "/websockify";
             resolve({
                 url,
                 password: metaData.imageParams ? metaData.imageParams.PASSWORD : undefined,
@@ -166,7 +167,14 @@ async function explainVMUpdate() {
  */
 
 //wss://meet.aptero.co/reverse/172.20.0.7/8080/websockify
-function createEntry(vmName) {
+function createEntry(data) {
+    /*0001retail:{
+        "container": "web-renderer-0001retail",
+      "agent": {
+        "url": "vm1.aptero.co/service/remote/orchestrator"
+    }
+    }*/
+    const vmName = data.container.replace("web-renderer-","");
     let element = document.createElement('li');
     element.innerHTML = vmName + " ";
 
@@ -191,8 +199,9 @@ async function fillList() {
     let vmList = document.getElementById("vm_list");
     axios.get("https://" + window.service.host + "/service/remote/orchestrator/vm/list").then(async resp => {
         resp = resp.data;
-        for (const respKey of resp) {
-            vmList.appendChild(createEntry(respKey));
+        for (const respKey in resp) {
+            const data = resp[respKey];
+            vmList.appendChild(createEntry(data));
         }
     }).catch(err => {
         console.log(err);

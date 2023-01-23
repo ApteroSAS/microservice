@@ -51,7 +51,7 @@ export class VMAgentManager {
     private async listAgentContainerWithCache(): Promise<Record<string, { container: string, agent: Agent }>> {
         for (const vmAgentListKey in this.vmAgentList) {
             const agent = this.vmAgentList[vmAgentListKey];
-            const resp = await axios.get(agent.url + "/vm/list");
+            const resp = await axios.get("https://"+agent.url + "/vm/list");
             if (resp.status !== 200) {
                 continue;
             }
