@@ -1,7 +1,18 @@
 import axios from "axios";
+import {properties} from "@root/properties/properties";
 
 const {exec} = require("child_process");
 const Docker = require('dockerode');
+
+export interface ImgParams{
+    EPHEMERAL?:"true"|"false",
+    URL:string,
+    KIOSK_BTN:"true"|"false",
+    MODE:"kiosk"|"app",
+    EXTENSION_LIST:string,//"[]"
+    LANG:string,//"en_GB.UTF-8"
+    LANGUAGE:string,//"en_GB.UTF-8"
+}
 
 export class NoVNCdocker {
     private docker: any;
@@ -156,7 +167,12 @@ export class NoVNCdocker {
         return ret;
     }
 
-    async createOrRetrieveScreen(sessionID, screenSizeX: number, screenSizeY: number, dockerImage: string, imageParams: any) {
+    async createOrRetrieveScreen(sessionID, screenSizeX: number, screenSizeY: number, dockerImage: string, imageParams: ImgParams):Promise<{
+        url:string,
+        ip:string,
+        port:string,
+        vmsid:string
+    }> {
         screenSizeX = screenSizeX || 1024;
         screenSizeY = screenSizeY || 768;
         let port = "8080";
@@ -176,7 +192,7 @@ export class NoVNCdocker {
             cmd += " " + dockerImage;
 
             //docker run -d -l "com.docker.compose.project=web-renderer" --expose 8080 -e DISPLAY_WIDTH=1024 -e DISPLAY_HEIGHT=768 --network=web_renderer_network --name web-renderer-local-test --rm registry.aptero.co/web-renderer-v2:latest
-            this.execDockerCommand(cmd);
+            this.execDockerCommand(cmd);//do not await
         }
         while (!containerInfo) {
             await new Promise(resolve => {
@@ -231,6 +247,7 @@ export class NoVNCdocker {
         //curl --header "Connection: Upgrade" --header "Upgrade: websocket" --header "Sec-WebSocket-Key: SGVsbG8sIHdvcmxkIQ==" --header "Sec-WebSocket-Version: 13" --max-time 1 http://172.19.0.3:8080/websokify
 
         return {
+            url:"wss://"+properties.VISIBLE_HOST+"/reverse/"+ip+"/"+port+"/websockify",
             ip,
             port,
             vmsid

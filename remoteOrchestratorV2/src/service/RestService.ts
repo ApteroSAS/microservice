@@ -1,4 +1,5 @@
-import {NoVNCdocker} from "@root/service/NoVNCdocker";
+import {CreateData, VMAgentManager} from "@root/service/VMAgentManager";
+import {properties} from "@root/properties/properties";
 
 let bodyParser = require('body-parser');
 
@@ -6,11 +7,9 @@ let cors = require('cors');
 const express = require('express')
 
 export class RestService {
-    private noVNCdocker: NoVNCdocker;
-    private defaultImage = "registry.aptero.co/web-renderer-v2:latest";
-
+    private defaultImage = properties.DEFAULT_IMG || "registry.aptero.co/web-renderer-v2:latest";
+    vmAgentManagement = new VMAgentManager();
     constructor(private expressApp,private buildVersion) {
-        this.noVNCdocker = new NoVNCdocker();
         this.setupApi();
     }
 
@@ -28,15 +27,9 @@ export class RestService {
         });
 
         router.post('/create', (req, res) => {
-            let data: {
-                localSessionID: string,
-                remoteScreenSessionId: string,
-                screenSizeX: number,
-                screenSizeY: number,
-                dockerImage:string,
-                imageParams:any } = req.body;
+            let data: CreateData = req.body;
             try {
-                this.noVNCdocker.createOrRetrieveScreen(data.remoteScreenSessionId, data.screenSizeX, data.screenSizeY,data.dockerImage || this.defaultImage,data.imageParams).then((resData) => {
+                this.vmAgentManagement.createOrRetrieveScreen(data.remoteScreenSessionId, data.screenSizeX, data.screenSizeY,data.dockerImage || this.defaultImage,data.imageParams).then((resData) => {
                     res.json(resData);
                 }).catch(err => {
                     console.error(err);
@@ -51,7 +44,7 @@ export class RestService {
         router.get('/heart/beat/:sid', (req, res) => {
             const sid = req.params.sid;
             try {
-                this.noVNCdocker.hearBeat(sid);
+                this.vmAgentManagement.hearBeat(sid);
                 res.json("OK");
             } catch (err) {
                 console.error(err);
@@ -62,7 +55,7 @@ export class RestService {
         router.get('/vm/remove/:sid', (req, res) => {
             const sid = req.params.sid;
             try {
-                this.noVNCdocker.remove(sid).then((resData) => {
+                this.vmAgentManagement.remove(sid).then((resData) => {
                     res.json(resData);
                 }).catch(err => {
                     console.error(err);
@@ -76,7 +69,7 @@ export class RestService {
 
         router.get('/vm/list', (req, res) => {
             try {
-                this.noVNCdocker.listContainer().then((resData) => {
+                this.vmAgentManagement.listContainer().then((resData) => {
                     res.json(resData);
                 }).catch(err => {
                     console.error(err);
@@ -91,7 +84,7 @@ export class RestService {
         router.get('/vm/pause/:sid', (req, res) => {
             const sid = req.params.sid;
             try {
-                this.noVNCdocker.pauseOrCleanUp(sid).then((resData) => {
+                this.vmAgentManagement.pauseOrCleanUp(sid).then((resData) => {
                     res.json(resData);
                 }).catch(err => {
                     console.error(err);
@@ -107,7 +100,7 @@ export class RestService {
         router.get('/vm/resume/:sid', (req, res) => {
             const sid = req.params.sid;
             try {
-                this.noVNCdocker.resume(sid).then((resData) => {
+                this.vmAgentManagement.resume(sid).then((resData) => {
                     res.json(resData);
                 }).catch(err => {
                     console.error(err);

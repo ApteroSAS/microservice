@@ -1,5 +1,5 @@
 export let properties = {
-
+    DEFAULT_IMG:"registry.aptero.co/web-renderer-v2:latest"
 };
 
 export function checkRequiredProperties(){

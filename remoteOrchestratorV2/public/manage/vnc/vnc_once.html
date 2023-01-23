@@ -176,8 +176,8 @@
             const host = window.service.host;
             let port = "443";
             const password = rpassword;
-            const path = "reverse/" + vmData.ip + "/" + vmData.port + "/websockify";
             const vmsid = vmData.vmsid;
+            const url = vmData.url;
 
             // | | |         | | |
             // | | | Connect | | |
@@ -186,17 +186,6 @@
             status("Connecting");
 
             // Build the websocket URL used to connect
-            let url;
-            if (window.location.protocol === "https:") {
-                url = 'wss';
-            } else {
-                url = 'ws';
-            }
-            url += '://' + host;
-            if(port) {
-                url += ':' + port;
-            }
-            url += '/' + path;
             function createRFB() {
                 // Creating a new RFB object will start a new connection
                 rfb = new RFB(document.getElementById('screen'), url,
