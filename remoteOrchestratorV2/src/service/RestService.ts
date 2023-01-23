@@ -1,5 +1,4 @@
 import {NoVNCdocker} from "@root/service/NoVNCdocker";
-import {AWSAppStream} from "@root/service/AWSAppStream";
 
 let bodyParser = require('body-parser');
 
@@ -8,12 +7,10 @@ const express = require('express')
 
 export class RestService {
     private noVNCdocker: NoVNCdocker;
-    private awsAppStream: AWSAppStream;
     private defaultImage = "registry.aptero.co/web-renderer-v2:latest";
 
     constructor(private expressApp,private buildVersion) {
         this.noVNCdocker = new NoVNCdocker();
-        this.awsAppStream = new AWSAppStream();
         this.setupApi();
     }
 
@@ -122,21 +119,6 @@ export class RestService {
             }
         });
 
-        router.post('/getStreamApp', (req, res) => {
-            //--stack-name FallBackStack --fleet-name FallBackFleet --user-id username --application-id chrome-context --session-context \"meet.aptero.co\
-            let data: { stackName: string, fleetName: string, userId: string, applicationId: string, sessionContext: string } = req.body;
-            try {
-                this.awsAppStream.getStreamingURL(data).then((resData) => {
-                    res.json(resData);
-                }).catch(err => {
-                    console.error(err);
-                    res.status(500).json(err);
-                })
-            } catch (err) {
-                console.error(err);
-                res.status(500).json(err);
-            }
-        });
         this.expressApp.use('/', router);
     }
 
