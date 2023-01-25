@@ -7,7 +7,6 @@ let cors = require('cors');
 const express = require('express')
 
 export class RestService {
-    private defaultImage = properties.DEFAULT_IMG || "registry.aptero.co/web-renderer-v2:latest";
     vmAgentManagement = new VMAgentManager();
     constructor(private expressApp,private buildVersion) {
         this.setupApi();
@@ -29,7 +28,7 @@ export class RestService {
         router.post('/create', (req, res) => {
             let data: CreateData = req.body;
             try {
-                this.vmAgentManagement.createOrRetrieveScreen(data.remoteScreenSessionId, data.screenSizeX, data.screenSizeY,data.dockerImage || this.defaultImage,data.imageParams).then((resData) => {
+                this.vmAgentManagement.createOrRetrieveScreen(data.remoteScreenSessionId, data.screenSizeX, data.screenSizeY,data.dockerImage,data.imageParams).then((resData) => {
                     res.json(resData);
                 }).catch(err => {
                     console.error(err);

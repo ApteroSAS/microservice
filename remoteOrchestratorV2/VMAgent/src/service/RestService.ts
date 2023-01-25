@@ -5,11 +5,18 @@ let bodyParser = require('body-parser');
 let cors = require('cors');
 const express = require('express')
 
+export interface CreateDTO{
+    remoteScreenSessionId?: string,
+    screenSizeX?: number,
+    screenSizeY?: number,
+    dockerImage?: string,
+    imageParams?: any
+}
+
 export class RestService {
     private noVNCdocker: NoVNCdocker;
-    private defaultImage = "registry.aptero.co/web-renderer-v2:latest";
 
-    constructor(private expressApp,private buildVersion) {
+    constructor(private expressApp, private buildVersion) {
         this.noVNCdocker = new NoVNCdocker();
         this.setupApi();
     }
@@ -24,19 +31,18 @@ export class RestService {
 
         let apiVersion = "1.0.0";//increment this each time you change the api and break the backward compatibility (semver)
         router.get('/api/version', (req, res) => {
-            res.json({apiVersion:apiVersion,buildVersion:this.buildVersion});
+            res.json({apiVersion: apiVersion, buildVersion: this.buildVersion});
         });
 
         router.post('/create', (req, res) => {
-            let data: {
-                localSessionID: string,
-                remoteScreenSessionId: string,
-                screenSizeX: number,
-                screenSizeY: number,
-                dockerImage:string,
-                imageParams:any } = req.body;
+            let data:CreateDTO = req.body;
             try {
-                this.noVNCdocker.createOrRetrieveScreen(data.remoteScreenSessionId, data.screenSizeX, data.screenSizeY,data.dockerImage || this.defaultImage,data.imageParams).then((resData) => {
+                this.noVNCdocker.createOrRetrieveScreen(
+                    data.remoteScreenSessionId,
+                    data.screenSizeX,
+                    data.screenSizeY,
+                    data.dockerImage,
+                    data.imageParams).then((resData) => {
                     res.json(resData);
                 }).catch(err => {
                     console.error(err);

@@ -1,4 +1,5 @@
 import axios from "axios";
+import {properties} from "@root/properties/properties";
 
 interface Agent {
     url: string,
@@ -6,12 +7,12 @@ interface Agent {
 
 export interface ImgParams{
     EPHEMERAL?:"true"|"false",
-    URL:string,
-    KIOSK_BTN:"true"|"false",
-    MODE:"kiosk"|"app",
-    EXTENSION_LIST:string,//"[]"
-    LANG:string,//"en_GB.UTF-8"
-    LANGUAGE:string,//"en_GB.UTF-8"
+    URL?:string,
+    KIOSK_BTN?:"true"|"false",
+    MODE?:"kiosk"|"app",
+    EXTENSION_LIST?:string,//"[]"
+    LANG?:string,//"en_GB.UTF-8"
+    LANGUAGE?:string,//"en_GB.UTF-8"
 }
 
 export interface CreateData {
@@ -22,8 +23,20 @@ export interface CreateData {
     imageParams: ImgParams
 }
 
+export function makeid(length:number)
+{
+    let result = "";
+    let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
+
 export class VMAgentManager {
     public readonly prefix = "web-renderer-";
+    public readonly ephemeralPrefix = "ephemeral-";
     vmAgentList: Record<string, Agent> = {
         pixis: {url: "vm1.aptero.co/service/remote/orchestrator"},
         //armin:{url:"vm2.aptero.co/service/remote/orchestrator"},
@@ -33,16 +46,48 @@ export class VMAgentManager {
     default: Agent = this.vmAgentList["pixis"];
     sidAgentCache: Record<string, { container: string, agent: Agent }> = {};
 
-    async createOrRetrieveScreen(sessionID: string, screenSizeX: number, screenSizeY: number, dockerImage: string, imageParams: ImgParams):Promise<{
+    async createOrRetrieveScreen(sessionID: string|undefined, screenSizeX: number, screenSizeY: number, dockerImage: string, imageParams: ImgParams):Promise<{
         url:string,
         ip:string,
         port:string,
         vmsid:string
     }> {
+        if(!sessionID){
+            sessionID = this.ephemeralPrefix+makeid(12);
+        }
+        if(!dockerImage){
+            dockerImage = properties.DEFAULT_IMG;
+        }
+        if(dockerImage.startsWith("registry.aptero.co/chrome-renderer") ) {
+            //Set default for web renderer
+            if (!imageParams) {
+                imageParams = {};
+            }
+            //default to EPHEMERAL = true
+            if (imageParams.EPHEMERAL !== "false") {
+                imageParams.EPHEMERAL = "true";
+            }
+            if (!imageParams.MODE) {
+                imageParams.MODE = "kiosk";
+            }
+            if (!imageParams.URL) {
+                imageParams.URL = "https://google.com";
+            }
+            //default lang to english
+            if (!imageParams.LANG) {
+                imageParams.LANG = "en_GB.UTF-8";
+            }
+            if (!imageParams.LANGUAGE) {
+                imageParams.LANGUAGE = imageParams.LANG;
+            }
+        }
         let vmAgent = this.default;
         let data:CreateData = {
             remoteScreenSessionId: sessionID,
-            screenSizeX, screenSizeY, dockerImage, imageParams
+            screenSizeX : screenSizeX || 1024,
+            screenSizeY: screenSizeY || 768,
+            dockerImage,
+            imageParams
         };
         return (await axios.post("https://"+vmAgent.url + "/create", data)).data as any;
     }

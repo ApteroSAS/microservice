@@ -123,6 +123,9 @@ export class NoVNCdocker {
     }
 
     async checkIfExist(sessionID): Promise<any> {
+        if(!sessionID){
+            return null;
+        }
         return new Promise((resolve, reject) => {
             this.docker.listContainers((err, containers) => {
                 containers.forEach((containerInfo) => {
@@ -173,8 +176,9 @@ export class NoVNCdocker {
         port:string,
         vmsid:string
     }> {
-        screenSizeX = screenSizeX || 1024;
-        screenSizeY = screenSizeY || 768;
+        if(!screenSizeX || !screenSizeY || !dockerImage || !imageParams){
+            throw new Error(); //the default for those params are defined in the orchestrator not in the agent
+        }
         let port = "8080";
         let containerInfo: any = await this.checkIfExist(sessionID);
         if (!containerInfo) {
