@@ -2,6 +2,7 @@
 import 'module-alias/register';
 import {RestService} from "@root/service/RestService";
 import {WebServer} from "@root/service/WebServer";
+import {properties} from "../VMAgent/src/properties/properties";
 
 export const BUILD_VERSION = require('../package.json').version;
 console.log(BUILD_VERSION);
@@ -13,6 +14,7 @@ process.on('unhandledRejection', (reason, p) => {
 const express = require('express')
 let expressApp = express();
 
+console.log("ENV:",properties);
 console.log("ready on 3443");
 let port = 3443;
 expressApp.listen(port, () => {

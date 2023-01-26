@@ -1,5 +1,5 @@
 export let properties = {
-    DEFAULT_IMG:"registry.aptero.co/chrome-renderer:latest"
+    DEFAULT_IMG: process.env.DEFAULT_IMG ? process.env.DEFAULT_IMG :"registry.aptero.co/chrome-renderer:latest",
 };
 
 export function checkRequiredProperties(){

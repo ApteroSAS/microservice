@@ -28,7 +28,14 @@ export class RestService {
         router.post('/create', (req, res) => {
             let data: CreateData = req.body;
             try {
-                this.vmAgentManagement.createOrRetrieveScreen(data.remoteScreenSessionId, data.screenSizeX, data.screenSizeY,data.dockerImage,data.imageParams).then((resData) => {
+                this.vmAgentManagement.createOrRetrieveScreen(
+                    data.remoteScreenSessionId,
+                    data.screenSizeX,
+                    data.screenSizeY,
+                    data.dockerImage,
+                    data.imageParams,
+                    data.agentServerUrl
+                ).then((resData) => {
                     res.json(resData);
                 }).catch(err => {
                     console.error(err);

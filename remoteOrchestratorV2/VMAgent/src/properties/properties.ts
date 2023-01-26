@@ -1,5 +1,5 @@
 export let properties = {
-    VISIBLE_HOST:"vm1.aptero.co"
+    VISIBLE_HOST: process.env.VISIBLE_HOST ? process.env.VISIBLE_HOST :"vm1.aptero.co",
 };
 
 export function checkRequiredProperties(){
