@@ -39,17 +39,35 @@ print(extStringConf)
 #####################
 #apply config
 ####################
+
+#display version
+f = open('/app/VERSION.TXT', 'r')
+file_contents = f.read()
+print ("Version : ")
+print (file_contents)
+f.close()
+
+import re
+def findAndReplace(A,B, path):
+    source = open(path)
+    destination = open(path, 'w')
+    for line in source:
+        #A = r'MANAGER_ID=\d*'
+        #B = r'MANAGER_ID='
+        new_line = re.sub(A, B, line)
+        destination.write(new_line)
+
 def applySpecificExtConfig(ext):
     if ext == "kiosk-button":
-        os.system("sed -i 's,%KIOSK_URL%,'"+os.environ.get("URL")+"',g' /home/chrome/.config/google-chrome/kiosk-button/js/fullScreener.js")
+        findAndReplace('%KIOSK_URL%',"'"+os.environ.get("URL")+"'","/home/chrome/.config/google-chrome/kiosk-button/js/fullScreener.js")
 
-os.system("sed -i 's|%EXT%|'"+extStringConf+"'|g' /app/conf.d/chrome.conf")
+findAndReplace('%EXT%',"'"+extStringConf+"'","/app/conf.d/chrome.conf")
 
 for entry in activatedExts:
     applySpecificExtConfig(entry)
 
-os.system("sed -i 's,%URL%,'"+os.environ.get("URL")+"',g' /app/conf.d/chrome.conf")
-os.system("sed -i 's,%MODE%,'"+os.environ.get("MODE")+"',g' /app/conf.d/chrome.conf")
+findAndReplace('%URL%',"'"+os.environ.get("URL")+"'","/app/conf.d/chrome.conf")
+findAndReplace('%MODE%',"'"+os.environ.get("MODE")+"'","/app/conf.d/chrome.conf")
 #os.system("sed -i 's,%LANG%,'"+os.environ.get("LANG")+"',g' /app/conf.d/chrome.conf")
 
 # local-gen takes time and not that useful

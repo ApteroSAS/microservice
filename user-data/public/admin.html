@@ -25,7 +25,12 @@
                 if(data.status===200){
                     localStorage.setItem('TOKEN', document.getElementById("floatingPassword").value);
                     window.location.href="list.html"
+                }else {
+                  alert("Wrong Login or Password");
+                  console.error(data);
                 }
+            } else {
+              alert("Wrong Login or password");
             }
         }
     </script>

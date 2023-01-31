@@ -1,5 +1,5 @@
 #https://medium.com/dot-debug/running-chrome-in-a-docker-container-a55e7f4da4a8
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 RUN apt update
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
@@ -17,7 +17,7 @@ RUN set -ex; \
       x11vnc \
       xterm \
       xvfb \
-      python \
+      python3 \
     && apt autoclean -y \
     && apt autoremove -y \
     && rm -rf /var/lib/apt/list

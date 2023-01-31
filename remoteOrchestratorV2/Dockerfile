@@ -52,6 +52,7 @@ COPY ./reverse_proxy_conf/nginx.conf /etc/nginx/nginx.conf
 COPY ./reverse_proxy_conf/conf.d /etc/nginx/conf.d/
 
 COPY ./startup.sh ./
+COPY ./version.json ./version.json
 ENV PORT 3443
 EXPOSE 3443
 CMD ./startup.sh

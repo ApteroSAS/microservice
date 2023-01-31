@@ -4,14 +4,15 @@ import {properties} from "@root/properties/properties";
 const {exec} = require("child_process");
 const Docker = require('dockerode');
 
-export interface ImgParams{
-    EPHEMERAL?:"true"|"false",
-    URL:string,
-    KIOSK_BTN:"true"|"false",
-    MODE:"kiosk"|"app",
-    EXTENSION_LIST:string,//"[]"
-    LANG:string,//"en_GB.UTF-8"
-    LANGUAGE:string,//"en_GB.UTF-8"
+export interface ImgParams {
+    DEBUG_KEEP: boolean;
+    EPHEMERAL?: boolean,
+    URL: string,
+    KIOSK_BTN: "true" | "false",
+    MODE: "kiosk" | "app",
+    EXTENSION_LIST: string,//"[]"
+    LANG: string,//"en_GB.UTF-8"
+    LANGUAGE: string,//"en_GB.UTF-8"
 }
 
 export class NoVNCdocker {
@@ -29,7 +30,7 @@ export class NoVNCdocker {
         console.log("heartBeatDeadTimeMs : " + this.heartBeatDeadTimeMs)
     }
 
-    hearBeatInit(containerInfo){
+    hearBeatInit(containerInfo) {
         if (containerInfo.Names && containerInfo.Names.length === 1) {
             let name: string = containerInfo.Names[0];
             if (name.startsWith("/" + this.prefix)) {
@@ -39,18 +40,18 @@ export class NoVNCdocker {
         }
     }
 
-    ephemeralInit(containerInfo){
+    ephemeralInit(containerInfo) {
         if (containerInfo.Names && containerInfo.Names.length === 1) {
             let name: string = containerInfo.Names[0];
             if (name.startsWith("/" + this.prefix)) {
-                if(containerInfo.Labels && containerInfo.Labels.ephemeral)
-                //reset all heart beat at restart but do not resume old VM
-                this.ephemeralList[name.replace("/", "")] = true;
+                if (containerInfo.Labels && containerInfo.Labels.ephemeral)
+                    //reset all heart beat at restart but do not resume old VM
+                    this.ephemeralList[name.replace("/", "")] = true;
             }
         }
     }
 
-    containerListInit(){
+    containerListInit() {
         this.docker.listContainers((err, containers) => {
             containers.forEach((containerInfo) => {
                 this.hearBeatInit(containerInfo);
@@ -99,7 +100,7 @@ export class NoVNCdocker {
             console.log(data);
         });*/
         this.execDockerCommand("docker network create " + this.networkName).catch(reason => {
-            if(reason.stderr !== "Error response from daemon: network with name web_renderer_network already exists\n"){
+            if (reason.stderr !== "Error response from daemon: network with name web_renderer_network already exists\n") {
                 throw new Error(reason);//otherwise ignore
             }
         });
@@ -123,7 +124,7 @@ export class NoVNCdocker {
     }
 
     async checkIfExist(sessionID): Promise<any> {
-        if(!sessionID){
+        if (!sessionID) {
             return null;
         }
         return new Promise((resolve, reject) => {
@@ -148,7 +149,7 @@ export class NoVNCdocker {
                     if (containerInfo.Names && containerInfo.Names.length === 1) {
                         let name: string = containerInfo.Names[0];
                         if (name.startsWith("/" + this.prefix) && name.endsWith(sessionID)) {
-                            if(containerInfo.State==="running") {
+                            if (containerInfo.State === "running") {
                                 resolve(containerInfo);
                             }
                         }
@@ -170,21 +171,22 @@ export class NoVNCdocker {
         return ret;
     }
 
-    async createOrRetrieveScreen(sessionID, screenSizeX: number, screenSizeY: number, dockerImage: string, imageParams: ImgParams):Promise<{
-        url:string,
-        ip:string,
-        port:string,
-        vmsid:string
+    async createOrRetrieveScreen(sessionID, screenSizeX: number, screenSizeY: number, dockerImage: string, imageParams: ImgParams): Promise<{
+        url: string,
+        ip: string,
+        port: string,
+        vmsid: string
     }> {
-        if(!screenSizeX || !screenSizeY || !dockerImage || !imageParams){
+        if (!screenSizeX || !screenSizeY || !dockerImage || !imageParams) {
             throw new Error(); //the default for those params are defined in the orchestrator not in the agent
         }
+        console.log(imageParams);
         let port = "8080";
         let containerInfo: any = await this.checkIfExist(sessionID);
         if (!containerInfo) {
             let cmd = "docker run -d";
             cmd += " -l \"com.docker.compose.project=web-renderer\"";
-            if(imageParams && imageParams.EPHEMERAL) {
+            if (imageParams && imageParams.EPHEMERAL === true) {
                 cmd += " -l \"ephemeral=true\"";
             }
             cmd += " --expose " + port;
@@ -192,7 +194,9 @@ export class NoVNCdocker {
             cmd += this.paramsToEnvString(imageParams);
             cmd += " --network=" + this.networkName;
             cmd += " --name " + this.prefix + sessionID;
-            cmd += " --rm";
+            if(!imageParams.DEBUG_KEEP === true) {
+                cmd += " --rm";
+            }
             cmd += " " + dockerImage;
 
             //docker run -d -l "com.docker.compose.project=web-renderer" --expose 8080 -e DISPLAY_WIDTH=1024 -e DISPLAY_HEIGHT=768 --network=web_renderer_network --name web-renderer-local-test --rm registry.aptero.co/web-renderer-v2:latest
@@ -220,12 +224,12 @@ export class NoVNCdocker {
         let start = new Date().getTime();
         let globalTimeOut = 20000;
         while (!pingOk) {
-            if(new Date().getTime()>(start+globalTimeOut)){
-                pingOk=true;
+            if (new Date().getTime() > (start + globalTimeOut)) {
+                pingOk = true;
             }
             try {
                 //check http server ready
-                const resp = await axios.get("http://"+ip+":"+port,{ //"/websockify"
+                const resp = await axios.get("http://" + ip + ":" + port, { //"/websockify"
                     timeout: 300,
                     /*headers:{
                         "Connection": "Upgrade",
@@ -236,8 +240,8 @@ export class NoVNCdocker {
                 });//wait 300ms
                 //console.log("ICI INFO");
                 //console.log(resp);
-                if(resp.status == 200){
-                    pingOk=true;
+                if (resp.status == 200) {
+                    pingOk = true;
                 }
             } catch (err) {
                 /* ignore error*/
@@ -251,7 +255,7 @@ export class NoVNCdocker {
         //curl --header "Connection: Upgrade" --header "Upgrade: websocket" --header "Sec-WebSocket-Key: SGVsbG8sIHdvcmxkIQ==" --header "Sec-WebSocket-Version: 13" --max-time 1 http://172.19.0.3:8080/websokify
 
         return {
-            url:"wss://"+properties.VISIBLE_HOST+"/reverse/"+ip+"/"+port+"/websockify",
+            url: "wss://" + properties.VISIBLE_HOST + "/reverse/" + ip + "/" + port + "/websockify",
             ip,
             port,
             vmsid
@@ -290,17 +294,17 @@ export class NoVNCdocker {
         });
     }
 
-    async pauseOrCleanUp(sid: string):Promise<void> {
+    async pauseOrCleanUp(sid: string): Promise<void> {
         sid = this.convertSid(sid);
-        if(this.ephemeralList[sid]){
+        if (this.ephemeralList[sid]) {
             await this.pause(sid);
             await new Promise(resolve => {
                 setTimeout(resolve, 10000); //just to be sure everything is paused
             });
-            await this.remove(sid).then(()=>{
+            await this.remove(sid).then(() => {
                 delete this.ephemeralList[sid];
             });
-        }else{
+        } else {
             await this.pause(sid);
         }
     }
@@ -310,7 +314,7 @@ export class NoVNCdocker {
         let cmd = "docker pause " + sid;
         try {
             await this.execDockerCommand(cmd);
-        }catch (e) {
+        } catch (e) {
             /* ignore error */
         }
     }
@@ -320,7 +324,7 @@ export class NoVNCdocker {
         let cmd = "docker unpause " + sid;
         try {
             return await this.execDockerCommand(cmd);
-        }catch (e) {
+        } catch (e) {
             /* ignore error */
         }
     }
@@ -339,7 +343,7 @@ export class NoVNCdocker {
                     if (containerInfo.Names && containerInfo.Names.length === 1) {
                         let name: string = containerInfo.Names[0];
                         if (name.startsWith("/" + this.prefix)) {
-                            ret.push(name.replace("/",""));
+                            ret.push(name.replace("/", ""));
                         }
                     }
                 });

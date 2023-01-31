@@ -2,9 +2,9 @@
 import 'module-alias/register';
 import {RestService} from "@root/service/RestService";
 import {WebServer} from "@root/service/WebServer";
-import {properties} from "../VMAgent/src/properties/properties";
+import {properties} from "./properties/properties";
 
-export const BUILD_VERSION = require('../package.json').version;
+export const BUILD_VERSION = require('../version.json').version;
 console.log(BUILD_VERSION);
 
 process.on('unhandledRejection', (reason, p) => {

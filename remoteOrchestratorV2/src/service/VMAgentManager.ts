@@ -7,7 +7,7 @@ interface Agent {
 }
 
 export interface ImgParams{
-    EPHEMERAL?:"true"|"false",
+    EPHEMERAL?:"true"|"false"|boolean,
     URL?:string,
     KIOSK_BTN?:"true"|"false",
     MODE?:"kiosk"|"app",
@@ -77,8 +77,8 @@ export class VMAgentManager {
                 imageParams = {};
             }
             //default to EPHEMERAL = true
-            if (imageParams.EPHEMERAL !== "false") {
-                imageParams.EPHEMERAL = "true";
+            if (imageParams.EPHEMERAL !== false && imageParams.EPHEMERAL !== "false") {
+                imageParams.EPHEMERAL = true;
             }
             if (!imageParams.MODE) {
                 imageParams.MODE = "kiosk";
