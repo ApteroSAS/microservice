@@ -1,12 +1,13 @@
 #https://medium.com/dot-debug/running-chrome-in-a-docker-container-a55e7f4da4a8
-FROM ubuntu:22.04
+#https://github.com/kasmtech/workspaces-images/blob/develop/src/ubuntu/install/chrome/install_chrome.sh
+FROM ubuntu:20.04
 
-RUN apt update
+RUN apt-get update
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
 
 # Install git, supervisor, VNC, & X11 packages
 RUN set -ex; \
-    apt update \
+    apt-get update \
     && apt-get install -y \
       bash \
       fluxbox \
@@ -18,19 +19,19 @@ RUN set -ex; \
       xterm \
       xvfb \
       python3 \
-    && apt autoclean -y \
-    && apt autoremove -y \
+    && apt-get autoclean -y \
+    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/list
 
 RUN set -ex; \
-    apt update \
+    apt-get update \
     && apt-get install -y \
       locales \
-    && apt autoclean -y \
-    && apt autoremove -y \
+    && apt-get autoclean -y \
+    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/list
 
-# #RUN apt install -y chromium-browser \
+# #RUN apt-get install -y chromium-browser \
 	# && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
 	# && apt-get install -y \
 	# fonts-liberation \
@@ -41,29 +42,29 @@ RUN set -ex; \
 	# && dpkg -i google-chrome-stable_current_amd64.deb \
 	# && rm google-chrome-stable_current_amd64.deb
 
-RUN apt update \
-    && apt install -y \
+RUN apt-get update \
+    && apt-get install -y \
     curl \
-	gpg-agent \
-    firefox \
-	chromium-browser \
+    wget \
+    gpg-agent \
 	fonts-liberation \
 	libgbm1 \
 	libnspr4 \
 	libnss3 \
 	xdg-utils \
-    && curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && (dpkg -i ./google-chrome-stable_current_amd64.deb || apt-get install -fy) \
+    && apt-get remove -y chromium-browser-l10n chromium-codecs-ffmpeg chromium-browser \
+    && wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O chrome.deb \
+    && apt-get install -fy ./chrome.deb \
     && curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add \
-    && rm google-chrome-stable_current_amd64.deb \
-    && apt autoclean -y \
-    && apt autoremove -y \
+    && rm ./chrome.deb \
+    && apt-get autoclean -y \
+    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt autoclean -y \
-    && apt autoremove -y \
+RUN apt-get autoclean -y \
+    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
-      
+
 # Setup demo environment variables
 ENV HOME=/root \
     DEBIAN_FRONTEND=noninteractive \
@@ -85,6 +86,8 @@ RUN touch /root/.vnc/passwd
 RUN x11vnc -storepasswd password /root/.vnc/passwd
 
 RUN cd /home/chrome/.config/google-chrome && chmod +x install-chrome.sh && ./install-chrome.sh
+#RUN sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' /home/chrome/.config/google-chrome/Default/Preferences
+#RUN sed -i 's/"exit_type":"Crashed"/"exit_type":"None"/' /home/chrome/.config/google-chrome/Default/Preferences
 
 #kiosk or app
 ENV URL="https://aptero.co"
