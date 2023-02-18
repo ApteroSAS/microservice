@@ -28,6 +28,10 @@ export class RestService {
         router.post('/create', (req, res) => {
             let data: CreateData = req.body;
             try {
+                //if(data.agentServerUrl+"/create"===req.url){
+                if(new URL(data.agentServerUrl).origin === new URL(req.url).origin){
+                    throw new Error("invalid params : "+data.agentServerUrl)
+                }
                 this.vmAgentManagement.createOrRetrieveScreen(
                     data.remoteScreenSessionId,
                     data.screenSizeX,

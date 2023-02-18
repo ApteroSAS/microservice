@@ -4,7 +4,7 @@ const IN_APP_WEB_BROWSER_TRAIL = "/web-browser.mp4";
 function init() {
   const paramHost = new URL(window.location.href).searchParams.get("host");
   window.service = {
-    host: paramHost || (window.location.host.startsWith("localhost") ? "vm1.aptero.co/service/remote/orchestrator" : (window.location.host+"/service/remote/orchestrator"))
+    host: paramHost || "vm1.aptero.co/service/remote/orchestrator",
   }
   console.log(window.service.host);
 }
