@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 RUN apt update -y
 RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
@@ -7,9 +7,21 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
 ##install docker
 ##################
 RUN apt install -y curl
-RUN curl -fsSL https://get.docker.com -o get-docker.sh
-RUN sh get-docker.sh
-
+#RUN curl -fsSL https://get.docker.com -o get-docker.sh
+#RUN sh get-docker.sh
+#https://docs.docker.com/engine/install/ubuntu/
+RUN apt-get install -y \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release
+RUN mkdir -m 0755 -p /etc/apt/keyrings
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+RUN echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+RUN apt-get update -y
+RUN apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin
 ##################
 ##install node
 ##################
