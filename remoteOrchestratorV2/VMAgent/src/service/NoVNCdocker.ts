@@ -22,6 +22,7 @@ export class NoVNCdocker {
     lastHeartBeat = {};
     ephemeralList = {};
     heartBeatDeadTimeMs = (process.env.HEARTBEATMS ? parseInt(process.env.HEARTBEATMS) : null) || 10 * 60 * 1000;
+    containerStartWaitTime = 2000;
 
     constructor() {
         this.setupDocker();
@@ -250,7 +251,7 @@ export class NoVNCdocker {
         }
 
         await new Promise(resolve => {
-            setTimeout(resolve, 1000); //just to be sure everything is started
+            setTimeout(resolve, this.containerStartWaitTime); //just to be sure everything is started
         });
         //curl --header "Connection: Upgrade" --header "Upgrade: websocket" --header "Sec-WebSocket-Key: SGVsbG8sIHdvcmxkIQ==" --header "Sec-WebSocket-Version: 13" --max-time 1 http://172.19.0.3:8080/websokify
 

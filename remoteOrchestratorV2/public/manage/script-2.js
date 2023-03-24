@@ -43,8 +43,10 @@ function ephemeralVMCreate() {
   let urlEl = document.getElementById("ephemeral_link_url");
   let urlStr = new URL(urlEl.value).toString()
   const sessionid = "ephemeral-" + makeid(12);
-  const width = 1024;
-  const height = 768;
+  const width = document.getElementById("width").value;
+  const height = document.getElementById("height").value;
+  //const width = 1024;
+  //const height = 768;
   const password = makeid(12);
   if (sessionid === "" || sessionid.length < 6 || sessionid.indexOf("public") !== -1) {
     alert("invalid sessionid")
