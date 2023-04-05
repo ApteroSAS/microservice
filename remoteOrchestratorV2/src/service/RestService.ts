@@ -28,7 +28,7 @@ export class RestService {
         router.post('/create', (req, res) => {
             let data: CreateData = req.body;
             try {
-                if(data.agentServerUrl.startsWith("http")){
+                if(data.agentServerUrl && data.agentServerUrl.startsWith("http")){
                     throw new Error("url should not include scheme");
                 }
                 this.vmAgentManagement.createOrRetrieveScreen(

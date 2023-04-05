@@ -37,7 +37,7 @@ RUN echo "deb https://nginx.org/packages/ubuntu/ focal nginx" >> /etc/apt/source
 RUN echo "deb-src https://nginx.org/packages/ubuntu/ focal nginx" >> /etc/apt/sources.list
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys ABF5BD827BD9BF62
 RUN apt update -y
-#RUN apt install -y nginx=1.20.*
+#RUN apt-get install -y nginx=1.20.*
 RUN apt install -y nginx
 
 ##################
