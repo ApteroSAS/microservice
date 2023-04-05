@@ -1,5 +1,4 @@
 import {CreateData, VMAgentManager} from "@root/service/VMAgentManager";
-import {properties} from "@root/properties/properties";
 
 let bodyParser = require('body-parser');
 
@@ -25,25 +24,23 @@ export class RestService {
             res.json({apiVersion:apiVersion,buildVersion:this.buildVersion});
         });
 
-        router.post('/create', (req, res) => {
+        router.post('/create', async (req, res) => {
             let data: CreateData = req.body;
+            console.log('/create',data);
             try {
                 if(data.agentServerUrl && data.agentServerUrl.startsWith("http")){
                     throw new Error("url should not include scheme");
                 }
-                this.vmAgentManagement.createOrRetrieveScreen(
+                const resData = await this.vmAgentManagement.createOrRetrieveScreen(
                     data.remoteScreenSessionId,
                     data.screenSizeX,
                     data.screenSizeY,
                     data.dockerImage,
                     data.imageParams,
                     data.agentServerUrl
-                ).then((resData) => {
-                    res.json(resData);
-                }).catch(err => {
-                    console.error(err);
-                    res.status(500).json(err);
-                })
+                );
+                console.log("/create result :",resData);
+                res.json(JSON.parse(JSON.stringify(resData)));
             } catch (err) {
                 console.error(err);
                 res.status(500).json(err);

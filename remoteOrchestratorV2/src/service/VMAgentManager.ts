@@ -1,6 +1,6 @@
 import axios from "axios";
 import {properties} from "@root/properties/properties";
-import * as https from "https";
+import fetch from 'node-fetch';
 
 interface Agent {
     url: string,
@@ -36,9 +36,10 @@ export function makeid(length:number)
     return result;
 }
 
-const httpsAgent = new https.Agent({
+/*const httpsAgent = new https.Agent({
     rejectUnauthorized: false
 })
+axios.defaults.httpsAgent = httpsAgent;*/
 
 export class VMAgentManager {
     public readonly prefix = "web-renderer-";
@@ -51,7 +52,8 @@ export class VMAgentManager {
     }
     default: Agent = this.vmAgentList["pixis"];
     sidAgentCache: Record<string, { container: string, agent: Agent }> = {};
-    scheme = "https://"
+    //scheme = "https://"
+    scheme = "http://"
     async createOrRetrieveScreen(
         sessionID: string|undefined,
         screenSizeX: number,
@@ -108,14 +110,21 @@ export class VMAgentManager {
             imageParams,
             agentServerUrl
         };
-        return (await axios.post(this.scheme+url + "/create", data,{httpsAgent})).data as any;
+        console.log(this.scheme+url + "/create");
+        //return (await axios.post(this.scheme+url + "/create", data)).data as any;
+        const response = await fetch(this.scheme+url + "/create", {
+            method: 'post',
+            body: JSON.stringify(data),
+            headers: {'Content-Type': 'application/json'}
+        });
+        return  await response.json() as any;
     }
 
 
     private async listAgentContainerWithCache(): Promise<Record<string, { container: string, agent: Agent }>> {
         for (const vmAgentListKey in this.vmAgentList) {
             const agent = this.vmAgentList[vmAgentListKey];
-            const resp = await axios.get(this.scheme+agent.url + "/vm/list",{httpsAgent});
+            const resp = await axios.get(this.scheme+agent.url + "/vm/list");
             if (resp.status !== 200) {
                 continue;
             }
@@ -141,22 +150,22 @@ export class VMAgentManager {
 
     async hearBeat(sid: string): Promise<any> {
         let vmAgent = await this.sidToVMAgent(sid);
-        return (await axios.get(this.scheme+vmAgent.agent.url + "/heart/beat/" + sid,{httpsAgent})).data as any;
+        return (await axios.get(this.scheme+vmAgent.agent.url + "/heart/beat/" + sid)).data as any;
     }
 
     async pauseOrCleanUp(sid: string): Promise<void> {
         let vmAgent = await this.sidToVMAgent(sid);
-        return (await axios.get(this.scheme+vmAgent.agent.url + "/vm/pause/" + sid,{httpsAgent})).data as any;
+        return (await axios.get(this.scheme+vmAgent.agent.url + "/vm/pause/" + sid)).data as any;
     }
 
     async resume(sid: string): Promise<any> {
         let vmAgent = await this.sidToVMAgent(sid);
-        return (await axios.get(this.scheme+vmAgent.agent.url + "/vm/resume/" + sid,{httpsAgent})).data as any;
+        return (await axios.get(this.scheme+vmAgent.agent.url + "/vm/resume/" + sid)).data as any;
     }
 
     async remove(sid: string): Promise<any> {
         let vmAgent = await this.sidToVMAgent(sid);
-        return (await axios.get(this.scheme+vmAgent.agent.url + "/vm/remove/" + sid,{httpsAgent})).data as any;
+        return (await axios.get(this.scheme+vmAgent.agent.url + "/vm/remove/" + sid)).data as any;
     }
 
     async listContainer(): Promise<Record<string, { container: string, agent: Agent }>> {
