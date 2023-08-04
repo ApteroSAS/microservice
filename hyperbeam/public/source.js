@@ -45,32 +45,51 @@ function getRegionFromLocale() {
 
 let hb; // Declare hb at a higher scope so it can be accessed in the resize event
 
+function styleShadowRoot(){
+  const root = document.getElementById("cloudComputerDiv").shadowRoot.children[0];
+  root.children[3].style.filter = "";
+  root.removeChild(root.children[1]);
+}
+
 async function start(){
   let url = readQueryVariable('url', "www.aptero.co");
-
+  let session = readQueryVariable('session', "");//session_id : for multiplayer frame
+  if (!(url.startsWith("http://") || url.startsWith("https://"))) {
+    url = "https://" + url;
+  }
   const response = await fetch('/computer', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
+      session: session? session : undefined,
       start_url: url,
       region: getRegionFromLocale(),
       width: window.innerWidth,
       height: window.innerHeight,
-    }),
+      webgl:true,
+    })
   });
 
   if (!response.ok) {
     throw new Error('Network response was not ok');
   }
 
-  const data = await response.json()
+  const data = await response.json();
+  const url2 = new URL(window.location.href);
+  url2.searchParams.set('session', data.session_id);
+
+  window.history.replaceState({}, '', url2.toString());
   hb = await Hyperbeam(cloudComputerDiv, data.embed_url)
 
   setInterval(() => {
     hb.ping();
   }, 1000);
+
+  setTimeout(() => {
+    styleShadowRoot();
+  },1000);
 }
 
 window.onresize = () => {

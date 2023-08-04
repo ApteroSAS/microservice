@@ -1,5 +1,5 @@
 export let properties = {
-    HB_API_KEY: process.env.HB_API_KEY ? process.env.HB_API_KEY : "sk_test_H7em9njExb9HsEqf04MVsXxbGQSrSrNk8QiLlrc0POw", //https://hyperbeam.com/dashboard/
+    HB_API_KEY: process.env.HB_API_KEY ? process.env.HB_API_KEY : "sk_test_cJ_DPpKvlOlDqRYsuvfPAPO0v1vRe7hy1vjCFfMii-E", //https://hyperbeam.com/dashboard/
 };
 
 export function checkRequiredProperties(){

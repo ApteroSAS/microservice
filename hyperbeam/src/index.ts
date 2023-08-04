@@ -22,7 +22,7 @@ expressApp.use(bodyParser.urlencoded({extended: true}));
 
 ///////// Start server ////
 let port = process.env.PORT || 8286;
-console.log("page http://localhost:" + port+"/static/index.html?url=www.google.com");
+console.log("page http://localhost:" + port+"/v1/index.html?url=www.google.com");
 expressApp.listen(port, () => {
     let apiService: HyperBeamApiService = new HyperBeamApiService();
     apiService.start(expressApp);
