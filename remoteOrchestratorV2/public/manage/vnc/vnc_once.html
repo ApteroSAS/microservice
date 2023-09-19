@@ -134,8 +134,21 @@
             resp = resp.data;
             resolve(resp);
           }).catch(err => {
-            console.log(err);
-            reject(err);
+            //retry once at least if it has been created it will not create a second one it wil just retrieve the one using the remoteScreenSessionId
+            axios.post("https://" + window.service.host + "/service/remote/orchestrator/create", {
+              localSessionID: "none",
+              remoteScreenSessionId: name,
+              screenSizeX: width,
+              screenSizeY: height,
+              dockerImage: image,
+              imageParams: imageParams
+            }).then(async resp => {
+              resp = resp.data;
+              resolve(resp);
+            }).catch(err => {
+              console.log(err);
+              reject(err);
+            });
           });
         });
       }

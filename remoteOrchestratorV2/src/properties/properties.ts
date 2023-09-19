@@ -1,5 +1,6 @@
 export let properties = {
     DEFAULT_IMG: process.env.DEFAULT_IMG ? process.env.DEFAULT_IMG :"registry.aptero.co/chrome-renderer:latest",
+    AGENT_LIST: process.env.AGENT_LIST ? process.env.AGENT_LIST : '{"pixis": {"url": "vm1.aptero.co/service/remote/orchestrator"}}',
 };
 
 export function checkRequiredProperties(){

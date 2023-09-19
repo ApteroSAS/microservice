@@ -44,16 +44,18 @@ axios.defaults.httpsAgent = httpsAgent;*/
 export class VMAgentManager {
     public readonly prefix = "web-renderer-";
     public readonly ephemeralPrefix = "ephemeral-";
-    vmAgentList: Record<string, Agent> = {
-        pixis: {url: "vm1.aptero.co/service/remote/orchestrator"},
-        //armin:{url:"vm2.aptero.co/service/remote/orchestrator"},
-        //eren:{url:"vm3.aptero.co/service/remote/orchestrator"},
-        //saturn:{url:"vm4.aptero.co/service/remote/orchestrator"},
-    }
-    default: Agent = this.vmAgentList["pixis"];
+    vmAgentList: Record<string, Agent>;
+    default: Agent;
     sidAgentCache: Record<string, { container: string, agent: Agent }> = {};
     //scheme = "https://"
     scheme = "http://"
+
+    constructor() {
+        this.vmAgentList = JSON.parse(properties.AGENT_LIST);
+        this.default = this.vmAgentList[Object.keys(this.vmAgentList)[0]];
+        console.log("VMAgentManager", this.vmAgentList, this.default);
+    }
+
     async createOrRetrieveScreen(
         sessionID: string|undefined,
         screenSizeX: number,
@@ -111,13 +113,7 @@ export class VMAgentManager {
             agentServerUrl
         };
         console.log(this.scheme+url + "/create");
-        //return (await axios.post(this.scheme+url + "/create", data)).data as any;
-        const response = await fetch(this.scheme+url + "/create", {
-            method: 'post',
-            body: JSON.stringify(data),
-            headers: {'Content-Type': 'application/json'}
-        });
-        return  await response.json() as any;
+        return (await axios.post(this.scheme+url + "/create", data)).data as any;
     }
 
 
@@ -144,6 +140,11 @@ export class VMAgentManager {
         if (!this.sidAgentCache[sid]) {
             //update cache
             await this.listAgentContainerWithCache();
+        }
+        if(!this.sidAgentCache[sid]){
+            console.log("sidToVMAgent",this.sidAgentCache);
+            console.log("vmAgentList",this.vmAgentList);
+            throw new Error("No agent found for sid "+sid);
         }
         return this.sidAgentCache[sid];
     }
