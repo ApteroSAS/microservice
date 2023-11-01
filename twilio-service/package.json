@@ -1,6 +1,6 @@
 {
-  "name": "@aptero/service-mail",
-  "version": "1.0.0",
+  "name": "@aptero/service-twilio",
+  "version": "1.1.0",
   "description": "",
   "main": "index.ts",
   "private": false,
@@ -26,8 +26,8 @@
     "express": "^4.18.2",
     "html-entities": "^2.3.3",
     "module-alias": "^2.2.2",
-    "twilio": "^3.82.2",
-    "twilio-video": "^2.24.3"
+    "twilio": "^4.19.0",
+    "twilio-video": "^2.28.1"
   },
   "devDependencies": {
     "@types/mocha": "10.0.0",
