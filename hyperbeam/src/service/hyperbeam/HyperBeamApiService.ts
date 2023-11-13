@@ -32,49 +32,67 @@ export default class HyperBeamApiService {
             let sessionActive = await this.checkSession(json.session);
             let resp;
 
-            console.log("HB processing",json)
-
-            if (sessionActive) {
-                resp = await this.retrieveSession(json.session);
-            } else {
-                resp = await this.createSession(json);
-
-                if (resp.data.code === "err_exceeded_vm_limit") {
-                    console.log("exceeded vm limit, deleting all vms");
-                    await this.deleteAllVMs();
-                    resp = await this.createSession(json);
-                }
-            }
-
-            res.send(resp.data);
-        });
-
-        
-        //  "/stopcomputer" is used to clear a stored Hyperbeam session
-        
-        router.post('/stopcomputer', async (req, res) => {
-        
-            let { session_id } = req.query;
-            let resp;
-
             try {
-                resp = await axios.delete(
-                `https://engine.hyperbeam.com/v0/vm/${session_id}`,
-                { headers: AUTH_HEADERS });
+                if (sessionActive) {
+                    resp = await this.retrieveSession(json.session);
+                } else {
+                    resp = await this.createSession(json);
+
+                    if (resp.data.code === "err_exceeded_vm_limit") {
+                        console.log("exceeded vm limit, deleting all vms");
+                        await this.deleteAllVMs();
+                        resp = await this.createSession(json);
+                    }
+                }
             } catch (e) {
                 console.error(e);
                 res.status(501);
                 res.send({ message: e.message });
                 return;
             }
-            res.sendStatus(200);
-            console.log("Deleted session",session_id)
+            
+            res.send(resp.data);
+        });
+        
+        router.post('/stopcomputer', async (req, res) => {
+        
+            let { session_id } = req.query;
+            let resp;
+
+            // Check if the session is active
+            try {
+                let sessionActive = await this.checkSession(session_id);
+                if (sessionActive) {
+                    // If active, delete it
+                    try {
+                        resp = await axios.delete(`${API_URL}/${session_id}`, { headers: AUTH_HEADERS });
+                    } catch (e) {
+                        console.error(e.response.data);
+                        resp = e.response;
+                    }
+
+                } else {
+                    // If not active, return a 404
+                    console.log("Session not found: " + session_id)
+                    res.status(404);
+                    res.send({ message: "Session not found: " + session_id});
+                    return;
+                }
+            } catch (e) {
+                console.error(e);
+                res.status(501);
+                res.send({ message: e.message });
+                return;
+            }
+
+            res.send(resp.data);
         });
 
         /*
             "/objcomputer" is used to return a consistent Hyperbeam session for 3D Screens in Hubs:
             This is because multiple users will ask for a session for the same object, and we
             want them to share the same session per object.
+            It is used both by Elements made in Hubs and Opal.
         */
         router.post('/objcomputer', async (req, res) => {
             // Queue the request to avoid multiple requests for the same object
@@ -83,28 +101,15 @@ export default class HyperBeamApiService {
                 let sessionActive = json.session ? await this.checkSession(json.session) : null;
                 let objIdentifier = json.objid;
 
-                
-                console.log("|||||||| objHB processing",json)
-                // Handle Opal created elements
                 if (json.profile && Object.keys(json.profile).length !== 0 && (json.profile.load || json.profile.save)) {
-                    // Not implemented yet
-                    delete json.profile;
-                    return;
-                    console.log("----->Loading/Saving profile", json.profile.load,"---",json.profile.save);
                     let resp: AxiosResponse<any, any>;
                     try {
-                        if (json.profile.load) {
-                            //json.profile.save = json.profile.load;
-                            console.log("----->Loading profile", json);
-                        }
-
                         try {
                             resp = await axios.post(API_URL, json, { headers: AUTH_HEADERS });
                         } catch (e) {
                             console.error(e.response.data);
                             resp = e.response;
                         }
-                        console.log("Retreived session",resp.data)
                     }
                     catch (e) {
                         console.error(e);
@@ -123,14 +128,11 @@ export default class HyperBeamApiService {
                 let resp;
                 if (sessionActive) {
                     resp = await this.retrieveSession(json.session);
-                    console.log("Retreived session",resp.data);
                 } else {
                     let mapSession = null;
-                    console.log("objIdentifier",objIdentifier);
                     if (objIdentifier)
                     {
                         mapSession = this.hb_objects.get(objIdentifier);
-                        console.log("mapSession",mapSession);
                         if (mapSession && await this.checkSession(mapSession)) {
                             // If found, return the session
                             resp = await this.retrieveSession(mapSession);
@@ -176,7 +178,7 @@ export default class HyperBeamApiService {
                         clearTimeout(this.clearTimer); // Clear the existing timer
                     }
                     console.log("Clearing list");
-                }, 20 * 1000); // 20 seconds in milliseconds
+                }, 30 * 1000); // 30 seconds in milliseconds
             }
         });
 
