@@ -1,9 +1,10 @@
-import {userDB} from "@root/mongodb/UserModel";
+import {userDB, UserDTO} from "@root/mongodb/user/UserModel";
+import {UserProfileDTO} from "@root/mongodb/user/UserProfileModel";
 
 
 export default class UserDataBase {
 
-    async updateUser(accountId: string, email: string, signinURL: string, profile: string) {
+    async updateUser(accountId: string, email: string, signinURL: string, profile: UserProfileDTO) {
         if (!email) {
             throw new Error("no email")
         }
@@ -19,27 +20,66 @@ export default class UserDataBase {
             promises.push(this.updateUserSignInURL(email, signinURL));
         }
         if (profile) {
-            console.log("profile : ", profile);
             promises.push(this.updateUserProfile(email, profile));
         }
         return Promise.all(promises);
     }
 
-    async findUserDataByMail(mail): Promise<any> {
-        const user = await userDB.find({email: mail});
-        if (user.length === 1) {
-            user[0].id = user[0].id.toString();//convert user.id to string
-            return user[0];
-        } else {
-            //user not found
+
+    private sanitizeUserProfile(user: any): UserProfileDTO | null {
+        if(!user){
             return null;
         }
+        if (user.length !== undefined) {
+            if (user.length > 1) {
+                console.error("user.length > 1");
+            } else if (user.length === 1) {
+                user = user[0];
+            }
+        }
+        return {
+            displayName: user.displayName,
+            phoneNumber: user.phoneNumber,
+            companyName: user.companyName,
+            jobTitle: user.jobTitle,
+            bio: user.bio,
+        };
     }
 
-    async findUserByMail(mail): Promise<String> {
-        const user: any = await userDB.find({email: mail});
-        user.id = user.id.toString();//convert user.id to string
-        return (user.accountId);//TODO is this realy working????
+    private sanitizeUser(user: any): UserDTO | null {
+        if(!user){
+            return null;
+        }
+        if (user.length !== undefined) {
+            if (user.length > 1) {
+                console.error("user.length > 1");
+            } else if (user.length === 1) {
+                user = user[0];
+            }
+        }
+        return {
+            id: user.id.toString(),//convert user.id to string
+            accountId: user.accountId,
+            email: user.email,
+            userId: user.userId,
+            name: user.name,
+            signinURL: user.signinURL,
+            lastUpdate: user.lastUpdate,
+            profile: this.sanitizeUserProfile(user.profile),
+        };
+    }
+
+    async findUserDataByMail(mail: string): Promise<UserDTO> {
+        return this.sanitizeUser(await userDB.find({email: mail}));
+    }
+
+    async findUserByMail(mail: string): Promise<String> {
+        const user = this.sanitizeUser(await userDB.find({email: mail}));
+        if (user) {
+            return user.accountId;
+        } else {
+            return null;
+        }
     }
 
     async updateEmailToAccountId(accountId: string, email: string) {
@@ -78,7 +118,7 @@ export default class UserDataBase {
         return "ok";
     }
 
-    async updateUserProfile(accountId: string, profile: string) {
+    async updateUserProfile(accountId: string, profile: UserProfileDTO) {
         if (accountId === "" || !accountId) {
             throw new Error("wrong id :" + accountId);
         }
@@ -100,16 +140,4 @@ export default class UserDataBase {
         return "ok";
     }
 
-
-    async setModeratorMultiple(emails: string[], roomSIDs: string[]):Promise<void> {
-        for (let email of emails) {
-            for (let roomSID of roomSIDs) {
-                await this.setModerator(email, roomSID);
-            }
-        }
-    }
-
-    async setModerator(email: string, roomSID: string):Promise<void> {
-        //TODO
-    }
 }

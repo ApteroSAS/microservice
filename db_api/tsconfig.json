@@ -7,7 +7,7 @@
     "resolveJsonModule": true,
     "sourceMap": true,
     "baseUrl": "." /* Base directory to resolve non-absolute module names. */,
-    "types" : ["node", "express"],
+    "types" : ["node", "express","jest"],
     "typeRoots": ["@types", "node_modules/@types"],
     "paths": {
       "@root/*": ["./src/*"]

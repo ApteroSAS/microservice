@@ -1,6 +1,14 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
+export interface UserProfileDTO{
+    displayName:string,
+    phoneNumber:string,
+    companyName:string,
+    jobTitle:string,
+    bio:string,
+}
+
 const UserProfileSchema = new Schema({
     displayName:{
         type:String,
