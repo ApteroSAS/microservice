@@ -1,10 +1,15 @@
+import 'dotenv/config';
+
 export let properties = {
-    MONGODB: process.env.MONGODB ? process.env.MONGODB : "mongodb+srv://dev:sjkPbH1zh78vdKRY@apteromain-h7nsw.mongodb.net/aptero-dev?retryWrites=true",//or DISABLED
-    MAIL_SERVICE: process.env.MAIL_SERVICE ? process.env.MAIL_SERVICE : "https://alphahub.aptero.co/service/mail",//or DISABLED
-    ADMIN_TOKEN: process.env.ADMIN_TOKEN ? process.env.ADMIN_TOKEN : "aptero"
+    MONGODB: process.env.MONGODB,
+    MAIL_SERVICE: process.env.MAIL_SERVICE,
+    ADMIN_TOKEN: process.env.ADMIN_TOKEN,
 };
 
 export function checkRequiredProperties(){
+    for (const key in properties) {
+        console.log(key +" : "+process.env[key]);
+    }
     if(process.env.PROD) {
         for (const key in properties) {
             if (!process.env[key]) {

@@ -1,13 +1,6 @@
 import mongoose from "mongoose";
-import { ObjectID } from "mongodb";
-import { json } from "body-parser";
-
-
 const Schema = mongoose.Schema;
 
-ObjectID.prototype.valueOf = function() {
-    return this.toString();
-};
 const UserProfileSchema = new Schema({
     displayName:{
         type:String,
@@ -25,7 +18,7 @@ const UserProfileSchema = new Schema({
         type:String,
         required:false
     },
-    Bio:{
+    bio:{
         type: String,
         required: false
     },

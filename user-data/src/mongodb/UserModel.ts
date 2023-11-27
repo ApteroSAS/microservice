@@ -1,24 +1,8 @@
 import mongoose from "mongoose";
-import { ObjectID } from "mongodb";
-import {userProfileDB} from "./UserProfileModel"
-//import { UserProfileModel } from "./UserProfileModel";
+import {userProfileDB} from "@root/mongodb/UserProfileModel";
 const Schema = mongoose.Schema;
 const profile=userProfileDB.schema;
-console.log(profile);
-ObjectID.prototype.valueOf = function() {
-    return this.toString();
-};
 
-/*
-
-    memeIpfsHash: string,
-    uid: string,
-    hot: number,
-    created: number,
-    value: number,
- */
-
-    
 const UserSchema = new Schema({
     accountId:{
         type: String,

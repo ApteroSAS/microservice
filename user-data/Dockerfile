@@ -1,4 +1,4 @@
-FROM node:16.17
+FROM node:20.10-alpine
 
 ENV PORT 8086
 EXPOSE 8086

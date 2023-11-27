@@ -128,7 +128,6 @@ export default class RoomApiService {
         });
 
         router.post('/room/admin/', async (req, res) => {
-            let roomSID = req.params.sid;
             let json = req.body;
             let jwt = json.jwt;
             //https://jwt.io/
