@@ -28,7 +28,7 @@ export default class PostgrestController {
      * @param table
      * @param filter
      */
-    async find(table: string,filter:string): Promise<any> {
+    async find<T>(table: string,filter:string): Promise<T[]> {
         let jwt = await this.jwtSecret.createPostgrestJWT();
         let headers = {
             authorization: `Bearer ${jwt}`,
@@ -37,8 +37,7 @@ export default class PostgrestController {
             //"Prefer": "return=representation"
         };
         let resp = await axios.get(this.host + table + "?"+filter, {headers: headers, data: {}});
-        resp = resp.data;
-        return resp;
+        return (resp.data as (T[])) || [];
     }
 
     async update(table: string, filter: string, data: any): Promise<any> {

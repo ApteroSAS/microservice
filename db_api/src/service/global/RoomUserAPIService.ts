@@ -30,31 +30,36 @@ export class RoomUserAPIService {
         });
 
         router.post('/moderator', async (req, res) => {
-            let json:ModeratorRequest = req.body;
+            try {
+                let json: ModeratorRequest = req.body;
 
-            // Extract the token from the Authorization header
-            const authHeader = req.headers.authorization;
-            const token = (authHeader && authHeader.split(' ')[1]) || json.TOKEN; // Bearer TOKEN_VALUE
+                // Extract the token from the Authorization header
+                const authHeader = req.headers.authorization;
+                const token = (authHeader && authHeader.split(' ')[1]) || json.TOKEN; // Bearer TOKEN_VALUE
 
-            // Check if the token in the body or the token in the header matches the ADMIN_TOKEN
-            if (token !== properties.ADMIN_TOKEN) {
-                res.status(500).json("Invalid Token");
-            } else {
-                if (!json.email || !json.roomSID) {
-                    res.status(500).json("Invalid body : format {email: string[], roomSID: string[]}");
-                    return;
+                // Check if the token in the body or the token in the header matches the ADMIN_TOKEN
+                if (token !== properties.ADMIN_TOKEN) {
+                    res.status(500).json("Invalid Token");
+                } else {
+                    if (!json.email || !json.roomSID) {
+                        res.status(500).json("Invalid body : format {email: string[], roomSID: string[]}");
+                        return;
+                    }
+                    json.TOKEN = undefined;
+                    //if there is just one email we convert to array
+                    if (typeof json.email === "string") {
+                        json.email = [json.email];
+                    }
+                    //if there is just one room we convert to array
+                    if (typeof json.roomSID === "string") {
+                        json.roomSID = [json.roomSID];
+                    }
+                    await this.userdb.setModeratorMultiple(json.email, json.roomSID);
+                    res.json(json);
                 }
-                json.TOKEN = undefined;
-                //if there is just one email we convert to array
-                if (typeof json.email === "string") {
-                    json.email = [json.email];
-                }
-                //if there is just one room we convert to array
-                if (typeof json.roomSID === "string") {
-                    json.roomSID = [json.roomSID];
-                }
-                await this.userdb.setModeratorMultiple(json.email, json.roomSID);
-                res.json(json);
+            } catch (err) {
+                console.error(err);
+                res.status(500).json(err);
             }
         });
 

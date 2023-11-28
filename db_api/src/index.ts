@@ -18,12 +18,12 @@ import {properties} from "@root/properties/properties";
 import PhoenixController from "@root/reticulum/PhoenixController";
 import PostgrestController from "@root/postgrest/PostgrestController";
 import {PgRoom} from "@root/postgrest/PgRoom";
-import {PgRoleMenmbership} from "@root/postgrest/PgRoleMenmbership";
+import {PgRoleMembership} from "@root/postgrest/PgRoleMembership";
 import {RoomService} from "@root/service/room/RoomService";
 import RoomApiService from "@root/service/room/RoomApiService";
-import {PgHubRoleMemberships} from "@root/postgrest/PgHubRoleMemberships";
 import {RoomUserAPIService} from "@root/service/global/RoomUserAPIService";
 import {RoomUserBDAccess} from "@root/service/global/RoomUserBDAccess";
+import {PgIdentities} from "@root/postgrest/PgIdentities";
 
 export const BUILD_VERSION = require('../dockflow.json').version;
 console.log(new Date().toISOString());
@@ -63,7 +63,8 @@ expressApp.listen(port, () => {
         let phoenixController = new PhoenixController(jwtAuth, properties.ADMIN_USER, "6f016efef5a501bd");
         let postgrestController: PostgrestController = new PostgrestController(jwtAuth, properties.POSTGREST_HOST);
         let pgRoom = new PgRoom(postgrestController);
-        let pgRoleMenmbership = new PgRoleMenmbership(postgrestController);
+        let pgRoleMenmbership = new PgRoleMembership(postgrestController);
+        let pgIdentities = new PgIdentities(postgrestController);
 
         let roomService = new RoomService(pgRoom);
         let apiService: RoomApiService = new RoomApiService(
@@ -76,8 +77,7 @@ expressApp.listen(port, () => {
         apiService.start(expressApp);
 
 
-        let pgHubRoleMemberships = new PgHubRoleMemberships(postgrestController);
-        const roomUserDBAccess = new RoomUserBDAccess(pgHubRoleMemberships);
+        const roomUserDBAccess = new RoomUserBDAccess(pgRoleMenmbership, pgIdentities, pgRoom);
         let roomUserApiService: RoomUserAPIService = new RoomUserAPIService(roomUserDBAccess);
         roomUserApiService.start(expressApp);
     }

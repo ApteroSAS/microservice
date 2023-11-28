@@ -1,4 +1,5 @@
 {
+    "image" : "aptero-database-api",
     "registry" : "rg.fr-par.scw.cloud/aptero",
     "version" : "1.0.0"
 }

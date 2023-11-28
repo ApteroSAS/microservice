@@ -4,18 +4,18 @@ import {JWTAuth} from "@root/jwt/JWTAuth";
 import PhoenixController from "@root/reticulum/PhoenixController";
 import AdapterProfileService from "@root/service/global/AdapterProfileService";
 import {properties} from "@root/properties/properties";
-import {PgRoleMenmbership} from "@root/postgrest/PgRoleMenmbership";
+import {PgRoleMembership} from "@root/postgrest/PgRoleMembership";
 import {RoomService} from "@root/service/room/RoomService";
 
 import express from "express";
 //https://postgrest.org/en/stable/errors.html
 export default class RoomApiService {
-    expressApp:express.Application;
+    expressApp: express.Application;
 
     constructor(
         public roomDB: RoomDataBaseService,
         private pgRoom: PgRoom,
-        private pgRoleMenmbership:PgRoleMenmbership,
+        private pgRoleMenmbership: PgRoleMembership,
         private jwt: JWTAuth,
         private phoenixController: PhoenixController,
         private roomService: RoomService
@@ -59,102 +59,109 @@ export default class RoomApiService {
                     console.log("USER NOT ADMIN");
                     res.status(500).json("USER NOT ADMIN");
                 }
-            }catch (e) {
+            } catch (e) {
                 console.log(e);
                 res.status(500).json(e);
             }
         });
 
         router.post('/room/jwt/helper/mongo', async (req, res) => {
-            let json = req.body;
-            let data = json.data;
-            let sid = json.hubsid;
-            let jwt = json.jwt;
-            let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "ret"});
-            if(payload.sub == properties.ADMIN_USER){
-                let ret = await this.jwt.createMongoJWT(sid,data);
-                res.json(ret);
-            }else{
-                res.status(500).json("USER NOT ADMIN");
+            try {
+                let json = req.body;
+                let data = json.data;
+                let sid = json.hubsid;
+                let jwt = json.jwt;
+                let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "ret"});
+                if (payload.sub == properties.ADMIN_USER) {
+                    let ret = await this.jwt.createMongoJWT(sid, data);
+                    res.json(ret);
+                } else {
+                    res.status(500).json("USER NOT ADMIN");
+                }
+            } catch (e) {
+                console.log(e);
+                res.status(500).json(e);
             }
         });
 
         router.post('/room/update/mongo', async (req, res) => {
-            let json = req.body;
-            let jwt = json.jwt;
-            //https://jwt.io/
-            /*
-            header {
-              "alg": "HS512",
-              "typ": "JWT"
-            }
-            payload:{
-              "iss":"aptero",
-              "hubSID":"vGgHMPT",
-              "data":{"entry_mode":"invite"}
-            }
-             */
-            let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "aptero"});
-            this.roomDB.updateRoomMongo(payload.hubSID, payload.data).then((room) => {
+            try {
+                let json = req.body;
+                let jwt = json.jwt;
+                //https://jwt.io/
+                /*
+                header {
+                  "alg": "HS512",
+                  "typ": "JWT"
+                }
+                payload:{
+                  "iss":"aptero",
+                  "hubSID":"vGgHMPT",
+                  "data":{"entry_mode":"invite"}
+                }
+                 */
+                let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "aptero"});
+                const room = await this.roomDB.updateRoomMongo(payload.hubSID, payload.data)
                 res.json(room);
-            }).catch((err) => {
-                console.error(err);
+            } catch (err) {
+                console.log(err);
                 res.status(500).json(err);
-            });
+            }
         });
 
         router.post('/room/update/pg', async (req, res) => {
-            let json = req.body;
-            let jwt = json.jwt;
-            //https://jwt.io/
-            /*
-            header {
-              "alg": "HS512",
-              "typ": "JWT"
-            }
-            payload:{
-              "iss":"aptero",
-              "hubSID":"vGgHMPT",
-              "data":{"entry_mode":"invite"}
-            }
-             */
-            let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "aptero"});
-            this.pgRoom.updateRoom(payload.hubSID, payload.data).then((room) => {
-                this.processPgRoomUpdate(payload);
+            try {
+                let json = req.body;
+                let jwt = json.jwt;
+                //https://jwt.io/
+                /*
+                header {
+                  "alg": "HS512",
+                  "typ": "JWT"
+                }
+                payload:{
+                  "iss":"aptero",
+                  "hubSID":"vGgHMPT",
+                  "data":{"entry_mode":"invite"}
+                }
+                 */
+                let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "aptero"});
+                const room = await this.pgRoom.updateRoom(payload.hubSID, payload.data)
+                await this.processPgRoomUpdate(payload);
                 res.json(room);
-            }).catch((err) => {
+            } catch (err) {
                 console.error(err);
                 res.status(500).json(err);
-            });
+            }
         });
 
         router.post('/room/admin/', async (req, res) => {
-            let json = req.body;
-            let jwt = json.jwt;
-            //https://jwt.io/
-            /*
-            header {
-              "alg": "HS512",
-              "typ": "JWT"
-            }
-            payload:{
-              "iss":"aptero",
-              "hubSID":"vGgHMPT",
-              "account_id":"toto@aptero.co",
-              "enable":true
-            }
-             */
-            let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "aptero"});
-            let account_id = payload.account_id;
-            let hubSID = payload.hubSID;
-            const dbId = await this.pgRoom.getDBId(hubSID);
-            let enable = payload.enable;
-            this.pgRoleMenmbership.updateRoom(dbId,account_id,enable).then((result) => {
+            try {
+                let json = req.body;
+                let jwt = json.jwt;
+                //https://jwt.io/
+                /*
+                header {
+                  "alg": "HS512",
+                  "typ": "JWT"
+                }
+                payload:{
+                  "iss":"aptero",
+                  "hubSID":"vGgHMPT",
+                  "account_id":"toto@aptero.co",
+                  "enable":true
+                }
+                 */
+                let payload: any = await this.jwt.verifyAndDecode(jwt, {issuer: "aptero"});
+                let account_id = payload.account_id;
+                let hubSID = payload.hubSID;
+                const dbId = await this.pgRoom.getDBId(hubSID);
+                const result = await this.pgRoleMenmbership.insert(dbId, account_id);
                 res.json(result);
-            }).catch((err) => {
+            } catch (err) {
                 console.error(err);
                 res.status(500).json(err);
-            });
+            }
         });
 
         router.get('/room/:sid', (req, res) => {
@@ -168,59 +175,64 @@ export default class RoomApiService {
         });
 
         router.get('/room/:sid/embed/token/', async (req, res) => {
-            let roomSID = req.params.sid;
-            this.pgRoom.getEmbedToken(roomSID).then((token) => {
+            try {
+                let roomSID = req.params.sid;
+                const token = await this.pgRoom.getEmbedToken(roomSID)
                 res.json(token);
-            }).catch((err) => {
+            } catch (err) {
                 console.error(err);
                 res.status(500).json(err);
-            });
+            }
         });
 
-        router.get('/room/:sid/clone', (req, res) => {
-            let roomSID = req.params.sid;
-            this.roomService.clone(roomSID).then((room) => {
+        router.get('/room/:sid/clone', async (req, res) => {
+            try {
+                let roomSID = req.params.sid;
+                const room = await this.roomService.clone(roomSID)
                 res.json(room);
-            }).catch((err) => {
+            } catch (err) {
                 console.error(err);
                 res.status(500).json(err);
-            });
+            }
         });
 
-        router.get('/room/:sid/people', (req, res) => {
-            let roomSID = req.params.sid;
-            this.roomService.people(roomSID).then((room) => {
+        router.get('/room/:sid/people', async (req, res) => {
+            try {
+                let roomSID = req.params.sid;
+                const room = await this.roomService.people(roomSID)
                 res.json(room);
-            }).catch((err) => {
+            } catch (err) {
                 console.error(err);
                 res.status(500).json(err);
-            });
+            }
         });
 
-        router.get('/room/:sid/entry', (req, res) => {
-            let roomSID = req.params.sid;
-            this.roomService.entry(roomSID).then((room) => {
+        router.get('/room/:sid/entry', async (req, res) => {
+            try {
+                let roomSID = req.params.sid;
+                const room = await this.roomService.entry(roomSID)
                 res.json(room);
-            }).catch((err) => {
+            } catch (err) {
                 console.error(err);
                 res.status(500).json(err);
-            });
+            }
         });
 
-        router.get('/room/:sid/trigger/update', (req, res) => {
-            let roomSID = req.params.sid;
-            this.phoenixController.sendRoomUpdated(roomSID).then((room) => {
+        router.get('/room/:sid/trigger/update', async (req, res) => {
+            try {
+                let roomSID = req.params.sid;
+                const room = await this.phoenixController.sendRoomUpdated(roomSID)
                 res.json(room);
-            }).catch((err) => {
+            } catch (err) {
                 console.error(err);
                 res.status(500).json(err);
-            });
+            }
         });
 
         this.expressApp.use('/', router);
     }
 
-    async processPgRoomUpdate(payload:{hubSID:string,data:any}) {
+    async processPgRoomUpdate(payload: { hubSID: string, data: any }) {
         if (!payload && !payload.hubSID) {
             return;
         }

@@ -72,7 +72,7 @@ export class PgRoom {
     }
 
     async getRoomDataFromSID(hubSID: string): Promise<PgRoomModel> {
-        let hubList = await this.postgrestController.find("hubs", "select=*" +
+        let hubList = await this.postgrestController.find<PgRoomModel>("hubs", "select=*" +
             ",hub_id::text" +
             ",created_by_account_id::text" +
             ",scene_id::text" +
