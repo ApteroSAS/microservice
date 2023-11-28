@@ -6,11 +6,11 @@ import AdapterProfileService from "@root/service/global/AdapterProfileService";
 interface ModeratorRequest {
     TOKEN?: string,
     email: string[] | string,
-    roomSID: string[]| string,
+    roomSID: string[] | string,
 }
 
 export class RoomUserAPIService {
-    public expressApp:express.Application;
+    public expressApp: express.Application;
     adapterService = new AdapterProfileService();
 
     constructor(public userdb: RoomUserBDAccess) {
@@ -59,7 +59,11 @@ export class RoomUserAPIService {
                 }
             } catch (err) {
                 console.error(err);
-                res.status(500).json(err);
+                try {
+                    res.status(500).json(err.toString());
+                } catch (e) {
+                    res.status(500).json("error");
+                }
             }
         });
 
