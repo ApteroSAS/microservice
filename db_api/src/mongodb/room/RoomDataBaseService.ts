@@ -4,6 +4,28 @@ import {properties} from "@root/properties/properties";
 
 export default class RoomDataBaseService {
 
+    sanitizeRoom(room: any): RoomDTO | null {
+        if (!room) {
+            return null;
+        }
+        if (room.length !== undefined) {
+            if (room.length > 1) {
+                console.error("room.length > 1");
+            } else if (room.length === 1) {
+                room = room[0];
+            }
+        }
+        return {
+            roomSID: room.roomSID,
+            spatialSound: room.spatialSound,
+            entryMode: room.entryMode,
+            preferencesOverride: room.preferencesOverride,
+            AppConfigOverride: room.AppConfigOverride,
+            features: room.features,
+            permission: room.permission,
+        };
+    }
+
     async findRoom(roomSID: string): Promise<RoomDTO> {
         if (properties.MONGODB === "DISABLED") {
             return ({} as any);
@@ -11,9 +33,7 @@ export default class RoomDataBaseService {
         if (roomSID === "" || !roomSID) {
             throw new Error("wrong id :" + roomSID);
         }
-        let result = await roomDB.findOne({roomSID: roomSID}).exec();
-        result.id = result.id.toString();
-        return result as undefined as RoomDTO;
+        return this.sanitizeRoom(await roomDB.findOne({roomSID: roomSID}).exec());
     }
 
     async findRoomByMongoId(mongoId: string): Promise<RoomDTO> {
@@ -23,9 +43,7 @@ export default class RoomDataBaseService {
         if (!mongoId) {
             throw new Error("wrong id :" + mongoId);
         }
-        let result = await roomDB.findOne({_id: mongoId}).exec();
-        result.id = result.id.toString();
-        return result as undefined as RoomDTO;
+        return this.sanitizeRoom(await roomDB.findOne({_id: mongoId}).exec());
     }
 
     onRoomUpdate(callback: (room, data) => void) {

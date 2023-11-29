@@ -164,14 +164,19 @@ export default class RoomApiService {
             }
         });
 
-        router.get('/room/:sid', (req, res) => {
-            let roomSID = req.params.sid;
-            this.roomDB.findRoom(roomSID).then((room) => {
+        router.get('/room/:sid', async (req, res) => {
+            try {
+                let roomSID = req.params.sid;
+                const room = await this.roomDB.findRoom(roomSID);
                 res.json(room);
-            }).catch((err) => {
+            } catch (err) {
                 console.error(err);
-                res.status(500).json(err);
-            });
+                try {
+                    res.status(500).json(err.toString());
+                }catch (e) {
+                    res.status(500).json("error");
+                }
+            }
         });
 
         router.get('/room/:sid/embed/token/', async (req, res) => {

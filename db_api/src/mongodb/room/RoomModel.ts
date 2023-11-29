@@ -4,6 +4,11 @@ const Schema = mongoose.Schema;
 export interface RoomDTO{
     roomSID:string,
     spatialSound:string,
+    entryMode:string,
+    preferencesOverride:Object,
+    AppConfigOverride:Object,
+    features:Object,
+    permission:Object
 }
 
 const RoomSchema = new Schema({
