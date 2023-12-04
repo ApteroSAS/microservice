@@ -23,6 +23,7 @@ export default class RoomDataBaseService {
             AppConfigOverride: room.AppConfigOverride,
             features: room.features,
             permission: room.permission,
+            customButton: room.customButton,
         };
     }
 
