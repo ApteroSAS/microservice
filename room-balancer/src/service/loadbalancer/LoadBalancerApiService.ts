@@ -30,6 +30,7 @@ export default class LoadBalancerApiService {
             }
         });
 
+        //TODO change to post and add token
         router.get('/remove', async (req, res) => {
             try {
                 let url = decodeURIComponent(req.query.url);
