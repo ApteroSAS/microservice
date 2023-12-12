@@ -4,7 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-console.log(process.env);
+console.log((window as any).properties);
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

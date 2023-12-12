@@ -2,26 +2,42 @@ import React, {useEffect, useState} from 'react';
 import PDFObject from 'pdfobject';
 import {PdfUrlInputForm} from "./PdfUrlInputForm";
 
+/**
+ * To test
+ * (normal unprotected works in iframe) https://www.antennahouse.com/hubfs/xsl-fo-sample/pdf/basic-link-1.pdf
+ * (normal unprotected works in iframe) https://www.clickdimensions.com/links/TestPDFfile.pdf
+ * (normal unprotected works in iframe)  https://www.pdf995.com/samples/pdf.pdf
+ * (HTTP PDF -> convert to https and should work) http://www.africau.edu/images/default/sample.pdf
+ * (cors PDF -> should trigger fallback url) https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+ * @constructor
+ */
+
 
 export const PDFViewer = () => {
     const [pdfUrl, setPdfUrl] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isUrlProvided, setIsUrlProvided] = useState(false);
 
-    const checkUrlAccessibility = async (url:string) => {
-        if(!url.startsWith("https")) {
+    const checkUrlAccessibility = async (url: string): Promise<boolean> => {
+        if (!url.startsWith("https")) {
             return false;
         }
         try {
             const response = await fetch(url, {
-                method: 'HEAD', // Use HEAD to fetch headers only
-                mode: 'no-cors'  // Prevent CORS errors
+                method: 'HEAD', // Use HEAD to minimize data transfer
+                mode: 'no-cors' // This avoids sending the preflight request
             });
-
-            return response.ok; // True if status code is 2xx
+            return response.ok; // This will always be false in 'no-cors' mode, but we can check the type of error in the catch block
         } catch (error) {
-            console.error('Error checking URL:', error);
-            return false;
+            if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+                // This indicates a possible CORS issue
+                console.error('CORS error:', error);
+                return true; // Return true if a CORS issue is detected
+            } else {
+                // Other types of errors
+                console.error('Error checking URL:', error);
+                return false;
+            }
         }
     };
 
@@ -29,16 +45,26 @@ export const PDFViewer = () => {
         let url = originalUrl;
         const isAccessible = await checkUrlAccessibility(originalUrl);
         if (!isAccessible) {
+            let properties:{
+                CORS_PROXY:string,
+                FORCE_CORS_PROXY:string,
+                FINAL_FALLBACK_URL:string
+            } = (window as any).properties;
+            console.log('original URL is not accessible (not iframable or downloadable)');
             //look in public test folder for blocked sample PDFs.
             // Try using CORS proxy
             let isProxyAccessible = false;
-            if(process.env.CORS_PROXY) {
-                const corsProxyUrl = process.env.CORS_PROXY+encodeURIComponent(originalUrl);
+            if(properties.CORS_PROXY) {
+                const corsProxyUrl = properties.CORS_PROXY+originalUrl;
                 isProxyAccessible = await checkUrlAccessibility(corsProxyUrl);
+                console.log(`using cors proxy : ${properties.CORS_PROXY}`);
+                console.log('proxy URL is accessible:', isProxyAccessible);
                 url = isProxyAccessible ? corsProxyUrl : originalUrl;
             }
-            if (!isProxyAccessible && process.env.FINAL_FALLBACK_URL) {
-                window.location.href = process.env.FINAL_FALLBACK_URL+encodeURIComponent(originalUrl); // Use fallback URL
+            if (!isProxyAccessible && properties.FINAL_FALLBACK_URL) {
+                let fallbackURL = properties.FINAL_FALLBACK_URL+originalUrl;
+                console.log('using fallback URL : ', fallbackURL);
+                window.location.href = fallbackURL; // Use fallback URL
             }
         }
         //PDF JS is used for IPHONE and mac. Use browserstack to test if needed

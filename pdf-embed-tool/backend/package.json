@@ -1,0 +1,43 @@
+{
+  "name": "@aptero/pdf-embed-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "private": false,
+  "scripts": {
+    "exec": "node dist/",
+    "build": "tsc",
+    "dev": "tsc --watch & nodemon dist",
+    "test": "tsc && jest",
+    "lint": "eslint src --ext ts",
+    "tsc": "tsc",
+    "docker:publish": "npx dockflow publish"
+  },
+  "_moduleAliases": {
+    "@root": "./dist/"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@types/express": "^4.17.21",
+    "@types/underscore": "^1.11.15",
+    "axios": "^1.6.2",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "eventemitter3": "^5.0.1",
+    "express": "^4.18.2",
+    "html-entities": "^2.4.0",
+    "module-alias": "^2.2.3",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/jest": "^29.5.10",
+    "@types/module-alias": "^2.0.4",
+    "@types/node": "^20.10.0",
+    "eslint": "8.54.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "5.3.2",
+    "typescript-eslint-parser": "22.0.0"
+  }
+}
