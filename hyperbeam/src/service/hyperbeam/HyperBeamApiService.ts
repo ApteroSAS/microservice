@@ -102,6 +102,17 @@ export default class HyperBeamApiService {
                 let objIdentifier = json.objid;
 
                 if (json.profile && Object.keys(json.profile).length !== 0 && (json.profile.load || json.profile.save)) {
+                    // FIRST: Send a session from an object if already defined in our list
+                    if (objIdentifier) {
+                        let mapSession = this.hb_objects.get(objIdentifier);
+                        if (mapSession && await this.checkSession(mapSession)) {
+                            // If found, return the session
+                            let resp = await this.retrieveSession(mapSession);
+                            return resp.data;
+                        }
+                    }
+
+                    // If not, we create one
                     let resp: AxiosResponse<any, any>;
                     try {
                         try {
@@ -130,13 +141,11 @@ export default class HyperBeamApiService {
                     resp = await this.retrieveSession(json.session);
                 } else {
                     let mapSession = null;
-                    if (objIdentifier)
-                    {
+                    if (objIdentifier) {
                         mapSession = this.hb_objects.get(objIdentifier);
                         if (mapSession && await this.checkSession(mapSession)) {
                             // If found, return the session
                             resp = await this.retrieveSession(mapSession);
-                            console.log("Retreived existing session",mapSession);
                         } else {
                             // If not found, create a new session and register it for this object
                             resp = await this.createSession(json);
@@ -145,7 +154,6 @@ export default class HyperBeamApiService {
                                 console.log("|NEW!----hb_objects",this.hb_objects);
                             }
                         }
-                        
                     } else {
                         resp = await this.createSession(json);
                     }
