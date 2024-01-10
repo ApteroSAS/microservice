@@ -2,14 +2,11 @@ import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 const LogSchema = new Schema({
-    time:{
-        type: String,
-        required: true
-    },
+    timestamp: { type: Date, default: Date.now }
 }, { strict: false });
 
 export interface LogDTO extends Document{
-    time: string,
+    timestamp: Date,
 }
 
 export const LogModel = mongoose.model<LogDTO>("Log", LogSchema);

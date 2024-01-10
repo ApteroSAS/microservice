@@ -3,8 +3,8 @@ import {properties} from "@root/properties/properties";
 import cron from 'node-cron';
 
 export interface LogData {
-    time?: string,
-    [key: string]: string|number; // Allows additional properties of type string
+    timestamp?: Date,
+    [key: string]: string|number|Date; // Allows additional properties of type string
 }
 
 
@@ -21,7 +21,7 @@ export default class LoggerDataBase {
     }
 
     async trace<T extends LogData>(data: T):Promise<void> {
-        data.time = data.time || new Date().toISOString()
+        data.timestamp = new Date(data.timestamp || new Date());
         await LogModel.collection.insertOne(data);
     }
 
@@ -30,8 +30,8 @@ export default class LoggerDataBase {
         dateThreshold.setDate(dateThreshold.getDate() - (+properties.LOG_RETENTION_DAYS || 365));
 
         await LogModel.collection.deleteMany({
-            time: {
-                $lt: dateThreshold.toISOString() // Delete logs older than specified days
+            timestamp: {
+                $lt: dateThreshold// Delete logs older than specified days
             }
         });
     }
