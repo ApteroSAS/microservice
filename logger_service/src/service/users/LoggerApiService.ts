@@ -19,7 +19,7 @@ export default class LoggerApiService {
         router.post('/trace', async (req, res) => {
             let json = req.body;
             json.ip = req.ip;  // Extract client IP
-            this.loggerDataBase.trace(json);
+            await this.loggerDataBase.trace(json);
             res.json("ok");
         });
 
