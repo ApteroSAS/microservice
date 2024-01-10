@@ -1,0 +1,72 @@
+Arguments: 
+  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js
+
+PATH: 
+  C:\Program Files\Common Files\Oracle\Java\javapath;C:\Python310\Scripts\;C:\Python310\;C:\Python39\Scripts\;C:\Python39\;C:\Program Files\ImageMagick-6.9.11-Q16-HDRI;C:\Program Files\Oculus\Support\oculus-runtime;D:\Logiciel\patran\Patran\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\Microsoft VS Code\bin;D:\Documents\AppData\AndroidSdk\AndroidSdk\platform-tools;C:\Program Files\gradle-5.1.1\bin;C:\Program Files\Java\jdk1.8.0_171\bin;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files (x86)\IDEMIA\AWP\Dlls;C:\Program Files\IDEMIA\AWP\Dlls;C:\Program Files\mongodb-win32-x86_64-2008plus-ssl-4.0.9\bin;D:\Documents\AppData\geth;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\erl10.3\bin;C:\Users\pierr\.mix\escripts;C:\Program Files (x86)\ffmpeg-4.2.1-win64-static\bin;C:\cygwin64\bin;C:\ProgramData\chocolatey\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\Go\bin;C:\Program Files\dotnet\;C:\Program Files\PuTTY\;C:\Program Files\Git\cmd;C:\Program Files (x86)\Yarn\bin\;C:\Program Files\git-cinnabar;C:\Program Files\Calibre2\;C:\Program Files (x86)\Common Files\Acronis\VirtualFile\;C:\Program Files (x86)\Common Files\Acronis\VirtualFile64\;C:\Program Files (x86)\Common Files\Acronis\SnapAPI\;C:\Program Files (x86)\AOMEI\AOMEI Backupper\6.9.2;C:\Program Files\Meld\;C:\Program Files\nodejs\;C:\Program Files\WireGuard\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\PowerShell\7\;C:\Users\pierr\AppData\Local\Programs\Python\Python311\Scripts\;C:\Users\pierr\AppData\Local\Programs\Python\Python311\;C:\Users\pierr\AppData\Local\Programs\Python\Python38\Scripts\;C:\Users\pierr\AppData\Local\Programs\Python\Python38\;C:\Users\pierr\scoop\apps\elixir\current\bin;C:\Users\pierr\scoop\shims;C:\Users\pierr\.cargo\bin;C:\Users\pierr\AppData\Local\Programs\Python\Python37\Scripts\;C:\Users\pierr\AppData\Local\Programs\Python\Python37\;C:\Users\pierr\AppData\Local\Programs\Python\Python39\Scripts\;C:\Users\pierr\AppData\Local\Programs\Python\Python39\;C:\Users\pierr\AppData\Local\Programs\Python\Python38-32\Scripts\;C:\Users\pierr\AppData\Local\Programs\Python\Python38-32\;C:\Users\pierr\.windows-build-tools\python27\;C:\Users\pierr\AppData\Local\Microsoft\WindowsApps;C:\Users\pierr\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\pierr\AppData\Local\Microsoft\WindowsApps;C:\Users\pierr\go\bin;C:\Users\pierr\.dotnet\tools;C:\Users\pierr\AppData\Local\GitHubDesktop\bin;C:\Users\pierr\AppData\Local\Yarn\bin;C:\Program Files\7-Zip;C:\Program Files (x86)\BrowserStackLocal\;C:\Users\pierr\AppData\Roaming\npm;C:\Users\pierr\.dotnet\tools;C:\Workspace\ApteroVR\aptero_hub\microservice\common\logger_service\node_modules\.bin
+
+Yarn version: 
+  1.22.19
+
+Node version: 
+  18.16.0
+
+Platform: 
+  win32 x64
+
+Trace: 
+  SyntaxError: C:\Workspace\ApteroVR\aptero_hub\microservice\common\logger_service\package.json: Unexpected token } in JSON at position 709
+      at JSON.parse (<anonymous>)
+      at C:\Program Files (x86)\Yarn\lib\cli.js:1629:59
+      at Generator.next (<anonymous>)
+      at step (C:\Program Files (x86)\Yarn\lib\cli.js:310:30)
+      at C:\Program Files (x86)\Yarn\lib\cli.js:321:13
+
+npm manifest: 
+  {
+    "name": "@aptero/logger-service",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.ts",
+    "private": false,
+    "scripts": {
+      "exec": "node dist/",
+      "build": "tsc",
+      "dev": "tsc --watch & nodemon dist",
+      "test": "tsc && jest",
+      "lint": "eslint src --ext ts",
+      "tsc": "tsc",
+      "docker:publish": "npx dockflow publish"
+    },
+    "_moduleAliases": {
+      "@root": "./dist/"
+    },
+    "license": "UNLICENSED",
+    "dependencies": {
+      "@types/express": "^4.17.21",
+      "@types/underscore": "^1.11.15",
+      "body-parser": "^1.20.2",
+      "cors": "^2.8.5",
+      "dotenv": "^16.3.1",
+      "express": "^4.18.2",
+      "module-alias": "^2.2.3",
+      "mongodb": "^6.3.0",
+      "mongoose": "^8.0.1",
+    },
+    "devDependencies": {
+      "@types/cors": "^2.8.17",
+      "@types/jest": "^29.5.10",
+      "@types/module-alias": "^2.0.4",
+      "@types/node": "^20.10.0",
+      "eslint": "8.54.0",
+      "jest": "^29.7.0",
+      "ts-jest": "^29.1.1",
+      "typescript": "5.3.2",
+      "typescript-eslint-parser": "22.0.0"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
