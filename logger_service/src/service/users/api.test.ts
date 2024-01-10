@@ -21,7 +21,7 @@ test('trace-test', async () => {
     //add a test call 2 years ago so it is clean up in the next clean up
     let date = new Date();
     date.setFullYear(date.getFullYear() - 2);
-    await userDataBase.trace({test: "test", timestamp: date});
+    await userDataBase.trace({test: "test", time: date.toISOString()});
 });
 
 test('cleanUp-test', async () => {
