@@ -7,19 +7,59 @@ import {PromiseQueue} from './PromiseQueue';
 const API_URL = 'https://engine.hyperbeam.com/v0/vm';
 const AUTH_HEADERS = { 'Authorization': `Bearer ${properties.HB_API_KEY}` };
 
+import { LogModel } from '@root/mongodb/log/HyperbeamModel';
+import { startMongoose, stopMongoose } from '@root/mongodb/MongooseService';
 
-
+// Console log only if we are running in localhost
+function localLog(...args) {
+    if (process.env.PROD) {
+        return;
+    }
+    console.log(...args);
+}
 
 export default class HyperBeamApiService {
     public expressApp;
     hb_objects = new Map();
     queue = new PromiseQueue();
     clearTimer = null;
+    lastActionTimestamp = Date.now();
     constructor() {
         if (!properties.HB_API_KEY) {
             throw new Error("properties.HB_API_KEY not defined");
         }
+        startMongoose().catch(console.error);
     }
+
+    async retrieveValidSession(objIdentifier: string) {
+      const session = this.hb_objects.get(objIdentifier);
+      if (!session) {
+          return null; // No session found
+      }
+    
+      const isValid = await this.checkSession(session);
+      if (!isValid) {
+          // Session is invalid or expired, remove it
+          localLog("Session is invalid or expired, remove it: " + objIdentifier)
+          await LogModel.deleteOne({ objIdentifier: objIdentifier, sessionId: session });
+
+          this.hb_objects.delete(objIdentifier);
+          return null;
+      }
+    
+      return session;
+    }
+
+    async cleanup() {
+      await stopMongoose();
+      console.log('Cleanup complete, MongoDB disconnected');
+    }
+
+    async saveSession(objIdentifier: string, sessionId: string) {
+        const session = new LogModel({ objIdentifier, sessionId, time: new Date().toISOString() });
+        await session.save();
+    }
+
 
     mountAPI() {
         let router = express.Router();
@@ -104,12 +144,19 @@ export default class HyperBeamApiService {
                 if (json.profile && Object.keys(json.profile).length !== 0 && (json.profile.load || json.profile.save)) {
                     // FIRST: Send a session from an object if already defined in our list
                     if (objIdentifier) {
+                        localLog("objIdentifier Defined: " + objIdentifier)
                         let mapSession = this.hb_objects.get(objIdentifier);
-                        if (mapSession && await this.checkSession(mapSession)) {
+                        if (mapSession) {
+                            localLog("mapSession Defined: " + mapSession)
                             // If found, return the session
-                            let resp = await this.retrieveSession(mapSession);
-                            return resp.data;
+                            let session = await this.retrieveValidSession(objIdentifier);
+                            if (session) {
+                                // If found, return the session
+                                let resp = await this.retrieveSession(session);
+                                return resp.data;
+                            }
                         }
+
                     }
 
                     // If not, we create one
@@ -142,17 +189,32 @@ export default class HyperBeamApiService {
                 } else {
                     let mapSession = null;
                     if (objIdentifier) {
+                        let addnew = true;
                         mapSession = this.hb_objects.get(objIdentifier);
-                        if (mapSession && await this.checkSession(mapSession)) {
+                        if (mapSession) {
+                            localLog("mapSession Defined: " + mapSession)
                             // If found, return the session
-                            resp = await this.retrieveSession(mapSession);
-                        } else {
+                            let session = await this.retrieveValidSession(objIdentifier);
+                            if (session) {
+                                // If found, return the session
+                                addnew = false;
+                                let resp = await this.retrieveSession(session);
+                                return resp.data;
+                            }
+                        } 
+                        
+                        if (addnew) {
                             // If not found, create a new session and register it for this object
                             resp = await this.createSession(json);
                             if (resp.data.code !== "err_exceeded_vm_limit" && resp.data.session_id) {
                                 this.hb_objects.set(objIdentifier, resp.data.session_id);
-                                console.log("|NEW!----hb_objects",this.hb_objects);
+                                if (objIdentifier.startsWith('universal')) {
+                                    // If it starts with 'universal', save it to the DB
+                                    await this.saveSession(objIdentifier, resp.data.session_id); // Save to DB
+                                }
+                                console.log("|NEW!----hb_objects", this.hb_objects);
                             }
+
                         }
                     } else {
                         resp = await this.createSession(json);
@@ -179,13 +241,29 @@ export default class HyperBeamApiService {
             });
             
             // Clear the list after 20 seconds of inactivity
+            
             if (this.clearTimer - Date.now() <= 20 * 1000) {
                 clearTimeout(this.clearTimer);
-                this.clearTimer = setTimeout(() => {
+                this.clearTimer = setTimeout(async () => {
                     if (this.queue.getQueueSize() === 0 && this.clearTimer) {
                         clearTimeout(this.clearTimer); // Clear the existing timer
                     }
                     console.log("Clearing list");
+                    // Iterate through the hb_objects Map
+                    for (const [objIdentifier, sessionId] of this.hb_objects.entries()) {
+                        if (objIdentifier.startsWith('universal')) {
+                          // If it starts with 'universal', delete all sessions older than 10 hours
+                          const cutoffTime = new Date(Date.now() - 10 * 60 * 60 * 1000); // 10 hours ago
+                          await LogModel.deleteMany({ 
+                              objIdentifier, 
+                              time: { $lt: cutoffTime.toISOString() } 
+                          });
+                        } else {
+                            // If it does not start with 'universal', delete the session
+                            this.hb_objects.delete(objIdentifier);
+                            localLog(`Deleted session for objIdentifier: ${objIdentifier}`);
+                        }
+                    }
                 }, 30 * 1000); // 30 seconds in milliseconds
             }
         });
