@@ -18,7 +18,9 @@ export default class LoadBalancerApiService {
             res.json(apiVersion);
         });
 
-        //clone
+        /**
+         * (## used by cloudflare worker)
+         */
         router.get('/clone', async (req, res) => {
             try {
                 let url = decodeURIComponent(req.query.url);
@@ -69,7 +71,9 @@ export default class LoadBalancerApiService {
             }
         });
 
-        //must be high availability
+        /**
+         * must be high availability (## used by cloudflare worker)
+         */
         router.get('/meta', async (req, res) => {
             try {
                 let url = decodeURIComponent(req.query.url);

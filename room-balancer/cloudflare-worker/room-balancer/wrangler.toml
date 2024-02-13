@@ -7,5 +7,5 @@ durable_objects.bindings = [
 ]
 
 [[migrations]]
-tag = "v1" # Should be unique for each entry
+tag = "v1" # Should be unique for each entry (only increase on new class)
 new_classes = ["RoomBalancerDurableObject"]

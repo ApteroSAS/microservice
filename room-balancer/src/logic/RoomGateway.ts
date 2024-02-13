@@ -27,6 +27,9 @@ export class RoomGateway {
     }
 
     async getRoomEntry(roomSID: string): Promise<{ "description": string, "id": string, "images": { "preview": { "url": string } }, "lobby_count": number, "member_count": number, "name": string, "room_size": number, "scene_id": string, "type": string, "url": string, "user_data": any }> {
+        if(!roomSID || roomSID.length !== 7 || roomSID === "service"){
+            throw new Error("Invalid roomSID");
+        }
         let axiosResponse = await axios.get(this.serviceUrl + `room/${roomSID}/entry`);
         return axiosResponse.data;
     }
