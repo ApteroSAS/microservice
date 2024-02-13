@@ -1,4 +1,4 @@
-import LoggerDataBase from "@root/service/users/LoggerDataBase";
+import LoggerDataBase from "@root/service/logs/LoggerDataBase";
 import express from "express";
 
 export default class LoggerApiService {

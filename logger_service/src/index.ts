@@ -1,8 +1,8 @@
 import 'module-alias/register';
 import cors from "cors";
 import express from "express";
-import LoggerDataBase from "@root/service/users/LoggerDataBase";
-import LoggerApiService from "@root/service/users/LoggerApiService";
+import LoggerDataBase from "@root/service/logs/LoggerDataBase";
+import LoggerApiService from "@root/service/logs/LoggerApiService";
 import {startMongoose} from "@root/mongodb/MongooseService";
 
 ///////// Display version ////

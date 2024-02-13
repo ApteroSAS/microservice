@@ -1,4 +1,4 @@
-import {LogModel} from "@root/mongodb/user/LogModel";
+import {LogModel} from "@root/mongodb/log/LogModel";
 import {properties} from "@root/properties/properties";
 import cron from 'node-cron';
 

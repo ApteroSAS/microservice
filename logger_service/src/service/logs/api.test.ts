@@ -1,4 +1,4 @@
-import LoggerDataBase from "@root/service/users/LoggerDataBase";
+import LoggerDataBase from "@root/service/logs/LoggerDataBase";
 import {startMongoose, stopMongoose} from "@root/mongodb/MongooseService";
 import {properties} from "@root/properties/properties";
 
