@@ -1,3 +1,7 @@
+Test the cron
+npx wrangler dev --test-scheduled
+http://localhost:8787/__scheduled?cron=0+*+*+*+*
+
 # RoomBalancer
 
 This project integrates a Cloudflare Worker to enhance load balancing efficiency by directly leveraging Cloudflare's capabilities. It uses 302 redirects for temporary redirections and employs Cloudflare's Cache API for optimized content delivery.

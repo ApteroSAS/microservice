@@ -1,6 +1,7 @@
 name = "room-balancer"
 main = "src/index.ts"
 compatibility_date = "2022-12-19"
+logpush = true
 
 durable_objects.bindings = [
   { name = "roomBalancerDO", class_name = "RoomBalancerDurableObject" }
@@ -9,3 +10,6 @@ durable_objects.bindings = [
 [[migrations]]
 tag = "v1" # Should be unique for each entry (only increase on new class)
 new_classes = ["RoomBalancerDurableObject"]
+
+[triggers]
+crons = ["0 0 1 * *"]

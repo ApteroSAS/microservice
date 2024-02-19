@@ -1,3 +1,4 @@
+
 export interface Env {
     // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
     //roomBalancer: KVNamespace;
@@ -26,6 +27,25 @@ export default {
         ctx.passThroughOnException();
         return new RoomBalancer(request, env, ctx).getResponse();
         //return new Response(new Headers(request.headers).get("cache-control"));
+    },
+    async scheduled(event:any, env: Env, ctx: ExecutionContext) {
+        const fct = "reset";
+        const roomBalancerDO = env.roomBalancerDO.get(env.roomBalancerDO.idFromName("counter"));
+        let ret = (await roomBalancerDO.fetch("http://127.0.0.1/", {
+            method: 'POST',
+            headers: {
+                dataObjectRequest: fct//to identify request in log
+            },
+            body: JSON.stringify({
+                fct: fct,
+            }), cf: {
+                //No cache for room durable object
+                cacheTtl: 0,
+                cacheTtlByStatus: {"200-299": 0, 404: 0, "500-599": 0}
+            }
+        })).json();
+        console.log("scheduled", await ret);
+        ctx.waitUntil(ret);
     },
 };
 
@@ -88,32 +108,32 @@ export class RoomBalancerDurableObject {
      * @param request
      */
     async fetch(request: Request): Promise<Response> {
-        let json = await request.json() as any;
-        let fct = json.fct;
-        const url = new URL(request.url);
-        const urlString = url.origin + url.pathname;//remove search params
-        switch (fct) {
-            case "ping":
-                return new Response(JSON.stringify("pong"));
-            case "reset":
-                await this.state.storage.deleteAll();
-                return new Response(JSON.stringify("done"));
-            case "entry":
-                const {roomSID} = parseUrl(urlString);
-                return new Response(JSON.stringify((await this.state.storage.get(roomSID)) || "empty"));
-            case "entry2":
-                return await this.state.storage.transaction(async (txn: DurableObjectTransaction) => {
-                    const roomEntry = await this.getEntry(urlString, txn);
-                    return new Response(JSON.stringify(roomEntry));
-                });
-            case "list":
-                return new Response(JSON.stringify(Object.fromEntries(await this.state.storage.list())));
-            case "enter":
-            case COMPUTE_URL:
-                const outputUrl = await this.computeRoomURL(urlString) + url.search;//Add search params again
-                return new Response(JSON.stringify(outputUrl));
-            default:
-                throw new Error();
+        try {
+            let json = await request.json() as any;
+            let fct = json.fct;
+            const url = new URL(request.url);
+            const urlString = url.origin + url.pathname;//remove search params
+            switch (fct) {
+                case "ping":
+                    return new Response(JSON.stringify("pong"));
+                case "reset":
+                    await this.state.storage.deleteAll();
+                    return new Response(JSON.stringify("done"));
+                case "entry":
+                    const {roomSID} = parseUrl(urlString);
+                    return new Response(JSON.stringify((await this.state.storage.get(roomSID)) || "empty"));
+                case "list":
+                    return new Response(JSON.stringify(Object.fromEntries(await this.state.storage.list())));
+                case "enter":
+                case COMPUTE_URL:
+                    const outputUrl = await this.computeRoomURL(urlString) + url.search;//Add search params again
+                    return new Response(JSON.stringify(outputUrl));
+                default:
+                    throw new Error();
+            }
+        } catch (e) {
+            console.error(e);//just log the error and throw it again
+            throw e;
         }
     }
 
@@ -136,6 +156,7 @@ export class RoomBalancerDurableObject {
     async getMetasForRoom(roomUrl: string): Promise<Instances> {
         let {origin, roomSID} = parseUrl(roomUrl);
         //https://alphahub.aptero.co/service/loadbalancer/meta?url=https%3A%2F%2Falphahub.aptero.co%2FzdBzwbV%2Fwowza-live-stream-test
+        console.log("getMetasForRoom", origin + "/service/loadbalancer/meta?url=" + roomUrl);
         const res = await fetch(origin + "/service/loadbalancer/meta?url=" + roomUrl, {
             cf: {
                 //no cache on room balancer query
@@ -149,7 +170,9 @@ export class RoomBalancerDurableObject {
     async getEntry(url: string, txn: DurableObjectTransaction): Promise<CloneInstance> {
         const {roomSID} = parseUrl(url);
         //use cache
+        console.log("getEntry 1", roomSID);
         const instance = await txn.get(roomSID, {noCache: false}) as CloneInstance;
+        console.log("getEntry 2", instance);
         //manual cache management
         //ensure latest data - return entire instance - non blocking
         if (instance) {
@@ -166,7 +189,9 @@ export class RoomBalancerDurableObject {
 
     private async updateRoomFromOrigin(url: string, txn: DurableObjectTransaction, onlyRoomSID: string = ""): Promise<CloneInstance> {
         const {roomSID} = parseUrl(url);
+        console.log("updateRoomFromOrigin", roomSID);
         const metasForRoom: Instances = await this.getMetasForRoom(url);
+        console.log("updateRoomFromOrigin 2", metasForRoom);
         let putAll: { [id: string]: CloneInstance } = {};
         for (const metasForRoomKey in metasForRoom.clones) {
             const clone = metasForRoom.clones[metasForRoomKey];
@@ -175,12 +200,14 @@ export class RoomBalancerDurableObject {
             (clone as any).brothers = Object.keys(metasForRoom.clones);
             putAll[metasForRoomKey] = clone as CloneInstance;
         }
+        console.log("updateRoomFromOrigin 3", putAll);
         if (onlyRoomSID) {
             //only update one
             await txn.put(onlyRoomSID, putAll[onlyRoomSID], {noCache: false});
         } else {
             await txn.put(putAll, {noCache: false});
         }
+        console.log("updateRoomFromOrigin 4", putAll[roomSID]);
         return putAll[roomSID];
     }
 

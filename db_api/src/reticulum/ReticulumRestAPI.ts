@@ -1,5 +1,5 @@
 import axios from "axios";
-import {PromiseQueue} from "@root/reticulum/PromiseQueue";
+import {PromiseQueue} from "@worph/async-utils";
 
 export class ReticulumRestAPI {
 
@@ -29,18 +29,34 @@ export class ReticulumRestAPI {
         }).promise;
     }
 
-    async getRoomMeta(roomSid: string): Promise<{ "description": string, "id": string, "images": { "preview": { "url": string } }, "lobby_count": number, "member_count": number, "name": string, "room_size": number, "scene_id": string, "type": string, "url": string, "user_data": any }> {
-        if(roomSid.length!=7){
-            throw new Error("roomSid failed integrity check ; "+roomSid);
+    async getRoomMeta(roomSid: string): Promise<{
+        "description": string,
+        "id": string,
+        "images": { "preview": { "url": string } },
+        "lobby_count": number,
+        "member_count": number,
+        "name": string,
+        "room_size": number,
+        "scene_id": string,
+        "type": string,
+        "url": string,
+        "user_data": any
+    }> {
+        if (roomSid.length != 7) {
+            throw new Error("roomSid failed integrity check ; " + roomSid);
         }
-        return this.promiseQueue.add(async () => {
-            let axiosResponse = await axios.post(this.host + "/api/v1/hubs", {
+        let promiseCtrl = this.promiseQueue.add(async () => {
+            const timeout = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Request timed out')), 10000));
+            let axiosResponse = axios.post(this.host + "/api/v1/hubs", {
                 "hub": {
                     "hub_sid": roomSid
                 }
             });
-            await new Promise(resolve => setTimeout(resolve, this.delayMs));
-            return axiosResponse.data;
-        }).promise;
+            await new Promise(resolve => setTimeout(resolve, this.delayMs));//throttle call to server
+            await Promise.race([axiosResponse, timeout]);
+            return (await axiosResponse).data;
+        });
+        return promiseCtrl.promise;
     }
 }
