@@ -311,7 +311,7 @@ export default class HyperBeamApiService {
             "hide_cursor": json.hide_cursor || true,
             width: json.width || 1280,
             height: json.height || 720,
-            max_area: json.max_area || 1920 * 1080,
+            maxarea: json.maxarea || 1920 * 1080,
             ...json
         };
     }
